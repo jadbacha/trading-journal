@@ -25,6 +25,12 @@ interface Props {
   onClose: () => void
 }
 
+/** Which box a screenshot belongs to: the plan's or the review's. */
+type Slot = 'planImages' | 'images'
+
+/** Images pasted from the clipboard, if any. */
+const pastedImages = (e: React.ClipboardEvent) => [...e.clipboardData.files].filter((f) => f.type.startsWith('image/'))
+
 const RESULT_LABEL = { profit: 'Green day', loss: 'Red day', breakeven: 'Breakeven' }
 
 export function DayPanel({
@@ -46,25 +52,46 @@ export function DayPanel({
   const [symbol, setSymbol] = useState('')
   const [error, setError] = useState('')
   const [tagging, setTagging] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] = useState<Slot | null>(null)
 
-  const addImages = async (files: File[]) => {
+  const addImages = async (slot: Slot, files: File[]) => {
     if (!files.length) return
-    setSaving(true)
+    setSaving(slot)
     try {
       const ids = await Promise.all(files.map(saveScreenshot))
-      onNoteChange((n) => ({ ...n, images: [...(n.images ?? []), ...ids] }))
+      onNoteChange((n) => ({ ...n, [slot]: [...(n[slot] ?? []), ...ids] }))
     } catch {
       setError("Couldn't save that screenshot. Your browser may be out of storage space.")
     } finally {
-      setSaving(false)
+      setSaving(null)
     }
   }
 
-  const removeImage = (id: string) => {
-    onNoteChange((n) => ({ ...n, images: n.images?.filter((i) => i !== id) }))
+  const removeImage = (slot: Slot, id: string) => {
+    onNoteChange((n) => ({ ...n, [slot]: n[slot]?.filter((i) => i !== id) }))
     deleteImage(id).catch(() => {})
   }
+
+  /** Screenshot slot plus ⌘V handling for one box. */
+  const shots = (slot: Slot) => ({
+    onPaste: (e: React.ClipboardEvent) => {
+      const files = pastedImages(e)
+      if (files.length) {
+        e.preventDefault()
+        addImages(slot, files)
+      }
+    },
+    slot: (
+      <Screenshots
+        ids={note?.[slot] ?? []}
+        busy={saving === slot}
+        onAdd={(files) => addImages(slot, files)}
+        onRemove={(id) => removeImage(slot, id)}
+      />
+    ),
+  })
+  const plan = shots('planImages')
+  const review = shots('images')
 
   const title = new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
     weekday: 'long',
@@ -87,17 +114,7 @@ export function DayPanel({
   }
 
   return (
-    <aside
-      className="panel"
-      aria-label={`Journal for ${title}`}
-      onPaste={(e) => {
-        const files = [...e.clipboardData.files].filter((f) => f.type.startsWith('image/'))
-        if (files.length) {
-          e.preventDefault()
-          addImages(files)
-        }
-      }}
-    >
+    <aside className="panel" aria-label={`Journal for ${title}`}>
       <header className="panel-head">
         <div>
           <h2>{title}</h2>
@@ -123,7 +140,7 @@ export function DayPanel({
         </button>
       </header>
 
-      <section>
+      <section className="journal-box" onPaste={plan.onPaste}>
         <h3>Pre-market plan</h3>
         <textarea
           value={note?.plan ?? ''}
@@ -131,9 +148,10 @@ export function DayPanel({
           placeholder={'Bias, key levels, setups I will take, max loss and max trades for today…'}
           rows={4}
         />
+        {plan.slot}
       </section>
 
-      <section>
+      <section className="journal-box" onPaste={review.onPaste}>
         <h3>Review</h3>
         <textarea
           value={note?.text ?? ''}
@@ -155,11 +173,7 @@ export function DayPanel({
             </button>
           ))}
         </div>
-      </section>
-
-      <section>
-        <h3>Screenshots</h3>
-        <Screenshots ids={note?.images ?? []} busy={saving} onAdd={addImages} onRemove={removeImage} />
+        {review.slot}
       </section>
 
       <section>

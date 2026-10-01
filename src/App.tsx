@@ -11,7 +11,8 @@ import { loadData, saveData } from './storage'
 import { formatMoney, isoDay, periodStats, summarizeDays, tradeStats } from './stats'
 import type { DayNote, JournalData } from './types'
 
-const isEmptyNote = (n: DayNote) => !n.text.trim() && !n.plan?.trim() && !n.rating && !n.images?.length
+const isEmptyNote = (n: DayNote) =>
+  !n.text.trim() && !n.plan?.trim() && !n.rating && !n.images?.length && !n.planImages?.length
 
 export default function App() {
   const [data, setData] = useState<JournalData>(loadData)

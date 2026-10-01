@@ -22,7 +22,9 @@ export interface DayNote {
   text: string
   /** Pre-market plan, written before the session. */
   plan?: string
-  /** Screenshot ids in the image store (see images.ts). */
+  /** Screenshot ids for the plan, in the image store (see images.ts). */
+  planImages?: string[]
+  /** Screenshot ids for the review, in the image store. */
   images?: string[]
   /** 1–5 self-rating of how well the plan was followed. */
   rating?: number

@@ -51,7 +51,7 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
     setBusy(true)
     // Screenshots live outside the journal data, so embed them to make the backup complete.
     const images: Record<string, string> = {}
-    for (const id of Object.values(data.notes).flatMap((n) => n.images ?? [])) {
+    for (const id of Object.values(data.notes).flatMap((n) => [...(n.planImages ?? []), ...(n.images ?? [])])) {
       const img = await getImage(id).catch(() => undefined)
       if (img) images[id] = await blobToDataUrl(img)
     }

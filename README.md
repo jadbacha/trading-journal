@@ -20,7 +20,8 @@ Click a day to open its journal:
 
 - **Pre-market plan:** write your bias, levels, setups and max loss before the session.
 - **Review:** after the close, compare what happened with the plan and rate how well you followed it.
-- **Screenshots:** paste a chart (⌘V), drop it, or pick a file. Click a thumbnail to see it full size.
+- **Screenshots:** the plan and the review each have their own. Paste a chart (⌘V) while typing in that box,
+  drop it on the box, or click to pick a file. Click a thumbnail to see it full size.
 - **Trades:** that day's trades. **Tag** a trade with mistakes like *Revenge trade* or *Moved stop*; the
   **Mistakes** box under Performance then shows what each mistake cost for the month or all time.
 

@@ -83,7 +83,7 @@ export function Screenshots({ ids, busy, onAdd, onRemove }: Props) {
             e.target.value = ''
           }}
         />
-        {busy ? 'Saving…' : 'Paste (⌘V), drop, or click to add a chart screenshot'}
+        {busy ? 'Saving…' : '+ Screenshot: paste (⌘V), drop, or click'}
       </label>
 
       {open && urls[open] && (
