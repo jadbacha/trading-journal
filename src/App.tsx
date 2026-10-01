@@ -6,9 +6,12 @@ import { DayPanel } from './components/DayPanel'
 import { Performance } from './components/Performance'
 import { ImportDialog } from './components/ImportDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { mistakeReport } from './mistakes'
 import { loadData, saveData } from './storage'
 import { formatMoney, isoDay, periodStats, summarizeDays, tradeStats } from './stats'
-import type { JournalData } from './types'
+import type { DayNote, JournalData } from './types'
+
+const isEmptyNote = (n: DayNote) => !n.text.trim() && !n.plan?.trim() && !n.rating && !n.images?.length
 
 export default function App() {
   const [data, setData] = useState<JournalData>(loadData)
@@ -35,13 +38,14 @@ export default function App() {
     () => (settings.challenge.enabled ? challengeStatus(days.values(), settings.challenge, today) : null),
     [days, settings.challenge, today],
   )
-  const perf = useMemo(
-    () =>
-      tradeStats(
-        perfScope === 'month' ? data.trades.filter((t) => t.date.startsWith(monthPrefix)) : data.trades,
-        settings.commissionPerContract,
-      ),
-    [data.trades, perfScope, monthPrefix, settings.commissionPerContract],
+  const scopedTrades = useMemo(
+    () => (perfScope === 'month' ? data.trades.filter((t) => t.date.startsWith(monthPrefix)) : data.trades),
+    [data.trades, perfScope, monthPrefix],
+  )
+  const perf = useMemo(() => tradeStats(scopedTrades, settings.commissionPerContract), [scopedTrades, settings.commissionPerContract])
+  const mistakes = useMemo(
+    () => mistakeReport(scopedTrades, settings.commissionPerContract),
+    [scopedTrades, settings.commissionPerContract],
   )
   const tradingDays = month.green + month.red + month.gray
   const existingIds = useMemo(() => new Set(data.trades.map((t) => t.id)), [data.trades])
@@ -122,6 +126,7 @@ export default function App() {
 
           <Performance
             stats={perf}
+            mistakes={mistakes}
             scope={perfScope}
             monthName={monthName}
             currency={settings.currency}
@@ -163,14 +168,22 @@ export default function App() {
             currency={settings.currency}
             commission={settings.commissionPerContract}
             flags={challenge?.flags.get(selected)}
+            mistakeTags={settings.mistakeTags}
             onClose={() => setSelected(null)}
-            onNoteChange={(note) =>
+            onNoteChange={(update) =>
               setData((d) => {
+                const note = update(d.notes[selected] ?? { text: '' })
                 const notes = { ...d.notes }
-                if (!note.text.trim() && !note.rating) delete notes[selected]
+                if (isEmptyNote(note)) delete notes[selected]
                 else notes[selected] = note
                 return { ...d, notes }
               })
+            }
+            onTradeMistakes={(id, tags) =>
+              setData((d) => ({
+                ...d,
+                trades: d.trades.map((t) => (t.id === id ? { ...t, mistakes: tags.length ? tags : undefined } : t)),
+              }))
             }
             onAddTrade={(t) =>
               setData((d) => ({

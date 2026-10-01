@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { ChallengeRules } from '../challenge'
 import { formatRemaining, parseDuration } from '../challenge'
 import type { JournalData, Settings } from '../types'
+import { blobToDataUrl, clearImages, dataUrlToBlob, getImage, putImage } from '../images'
+import { DEFAULT_MISTAKES } from '../mistakes'
 import { normalize } from '../storage'
 
 interface Props {
@@ -22,6 +24,8 @@ function toLocalInput(iso: string): string {
 export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) {
   const [message, setMessage] = useState('')
   const [remaining, setRemaining] = useState('')
+  const [tagsText, setTagsText] = useState(() => data.settings.mistakeTags.join(', '))
+  const [busy, setBusy] = useState(false)
   const { settings } = data
   const rules = settings.challenge
   const setRules = (patch: Partial<ChallengeRules>) => onSettings({ ...settings, challenge: { ...rules, ...patch } })
@@ -37,8 +41,22 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
     </label>
   )
 
-  const exportBackup = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const saveTags = () => {
+    const tags = [...new Set(tagsText.split(',').map((t) => t.trim()).filter(Boolean))]
+    onSettings({ ...settings, mistakeTags: tags.length ? tags : DEFAULT_MISTAKES })
+    setTagsText((tags.length ? tags : DEFAULT_MISTAKES).join(', '))
+  }
+
+  const exportBackup = async () => {
+    setBusy(true)
+    // Screenshots live outside the journal data, so embed them to make the backup complete.
+    const images: Record<string, string> = {}
+    for (const id of Object.values(data.notes).flatMap((n) => n.images ?? [])) {
+      const img = await getImage(id).catch(() => undefined)
+      if (img) images[id] = await blobToDataUrl(img)
+    }
+    setBusy(false)
+    const blob = new Blob([JSON.stringify({ ...data, images })], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -49,8 +67,14 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
 
   const restore = async (file: File) => {
     try {
-      const restored = normalize(JSON.parse(await file.text()))
+      const raw = JSON.parse(await file.text())
+      const restored = normalize(raw)
       if (!confirm(`Replace your current journal with this backup (${restored.trades.length} trades)?`)) return
+      const images: Record<string, string> = raw.images && typeof raw.images === 'object' ? raw.images : {}
+      setBusy(true)
+      await clearImages()
+      for (const [id, url] of Object.entries(images)) await putImage(id, await dataUrlToBlob(url))
+      setBusy(false)
       onReplace(restored)
       setMessage('Backup restored.')
     } catch (e) {
@@ -169,12 +193,25 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
           </>
         )}
 
+        <h3>Mistake tags</h3>
+        <label className="stack">
+          <span className="muted">Comma-separated. These are the options when you tag a trade.</span>
+          <input
+            value={tagsText}
+            onChange={(e) => setTagsText(e.target.value)}
+            onBlur={saveTags}
+            onKeyDown={(e) => e.key === 'Enter' && saveTags()}
+          />
+        </label>
+
         <h3>Your data</h3>
         <p className="muted">
           Everything is stored in this browser only. Export a backup now and then, or to move to another device.
         </p>
         <div className="row-buttons">
-          <button onClick={exportBackup}>Export backup</button>
+          <button onClick={exportBackup} disabled={busy}>
+            {busy ? 'Working…' : 'Export backup'}
+          </button>
           <label className="button ghost">
             Restore backup
             <input type="file" accept=".json,application/json" hidden onChange={(e) => e.target.files?.[0] && restore(e.target.files[0])} />
@@ -184,6 +221,7 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
             onClick={() => {
               if (confirm('Delete all trades and journal entries? This cannot be undone.')) {
                 onReplace({ trades: [], notes: {}, settings })
+                clearImages().catch(() => {})
                 setMessage('All data cleared.')
               }
             }}

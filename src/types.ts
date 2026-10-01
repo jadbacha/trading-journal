@@ -13,10 +13,17 @@ export interface Trade {
   qty?: number
   time?: string
   source: 'import' | 'manual'
+  /** Mistake tags from Settings.mistakeTags, e.g. "Revenge trade". */
+  mistakes?: string[]
 }
 
 export interface DayNote {
+  /** Post-session review. */
   text: string
+  /** Pre-market plan, written before the session. */
+  plan?: string
+  /** Screenshot ids in the image store (see images.ts). */
+  images?: string[]
   /** 1–5 self-rating of how well the plan was followed. */
   rating?: number
 }
@@ -28,6 +35,8 @@ export interface Settings {
   /** Round-trip commission per contract, subtracted from gross trades. */
   commissionPerContract: number
   challenge: ChallengeRules
+  /** Options offered when tagging a trade's mistakes. */
+  mistakeTags: string[]
 }
 
 export interface JournalData {

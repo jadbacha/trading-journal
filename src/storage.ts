@@ -1,4 +1,5 @@
 import { defaultRules } from './challenge'
+import { DEFAULT_MISTAKES } from './mistakes'
 import type { JournalData } from './types'
 
 const KEY = 'trading-journal:v1'
@@ -6,7 +7,13 @@ const KEY = 'trading-journal:v1'
 export const emptyData = (): JournalData => ({
   trades: [],
   notes: {},
-  settings: { breakevenThreshold: 0, currency: 'USD', commissionPerContract: 1.3, challenge: defaultRules() },
+  settings: {
+    breakevenThreshold: 0,
+    currency: 'USD',
+    commissionPerContract: 1.3,
+    challenge: defaultRules(),
+    mistakeTags: DEFAULT_MISTAKES,
+  },
 })
 
 export function loadData(): JournalData {

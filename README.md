@@ -16,7 +16,15 @@ Below the monthly summary, **Performance** shows win rate, average win, average 
 profit factor for the month on screen or all time. These are per trade and after commissions; breakeven trades
 don't count toward the win rate.
 
-Click a day to write a journal entry, rate how well you followed your plan, see that day's trades or add P&L by hand.
+Click a day to open its journal:
+
+- **Pre-market plan:** write your bias, levels, setups and max loss before the session.
+- **Review:** after the close, compare what happened with the plan and rate how well you followed it.
+- **Screenshots:** paste a chart (⌘V), drop it, or pick a file. Click a thumbnail to see it full size.
+- **Trades:** that day's trades. **Tag** a trade with mistakes like *Revenge trade* or *Moved stop*; the
+  **Mistakes** box under Performance then shows what each mistake cost for the month or all time.
+
+You can also add P&L by hand there.
 
 ## Getting your trades in
 
@@ -42,8 +50,8 @@ that fees turn into a loss shows red.
 
 ## Data
 
-Everything is stored in your browser (`localStorage`). Nothing is uploaded anywhere. Use **Settings → Export backup**
-to save a copy or move it to another device.
+Everything is stored in your browser (`localStorage`, with screenshots in IndexedDB). Nothing is uploaded anywhere. Use **Settings → Export backup**
+to save a copy or move it to another device; backups include your screenshots.
 
 ## Development
 

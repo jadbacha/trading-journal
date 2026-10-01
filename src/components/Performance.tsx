@@ -1,8 +1,10 @@
+import type { MistakeReport } from '../mistakes'
 import type { TradeStats } from '../stats'
 import { formatMoney } from '../stats'
 
 interface Props {
   stats: TradeStats
+  mistakes: MistakeReport
   scope: 'month' | 'all'
   monthName: string
   currency: string
@@ -11,7 +13,7 @@ interface Props {
 
 const pf = (n: number | null) => (n === null ? '—' : n === Infinity ? '∞' : n.toFixed(2))
 
-export function Performance({ stats: s, scope, monthName, currency, onScope }: Props) {
+export function Performance({ stats: s, mistakes, scope, monthName, currency, onScope }: Props) {
   const winTone = s.winRate === null ? '' : s.winRate >= 0.5 ? 'pos' : 'neg'
   const pfTone = s.profitFactor === null ? '' : s.profitFactor >= 1 ? 'pos' : 'neg'
   return (
@@ -50,6 +52,35 @@ export function Performance({ stats: s, scope, monthName, currency, onScope }: P
           <span className={`stat-value ${pfTone}`}>{pf(s.profitFactor)}</span>
           <span className="meter-detail">Total won ÷ total lost</span>
         </div>
+      </div>
+
+      <div className="mistakes">
+        <div className="mistakes-head">
+          <span className="stat-label">Mistakes</span>
+          {mistakes.rows.length > 0 && (
+            <span className="meter-detail">
+              Trades with mistakes{' '}
+              <strong className={mistakes.mistakePnl < 0 ? 'neg' : 'pos'}>{formatMoney(mistakes.mistakePnl, currency, true)}</strong>
+              {' · '}clean trades ({mistakes.clean.trades}){' '}
+              <strong className={mistakes.clean.pnl < 0 ? 'neg' : 'pos'}>{formatMoney(mistakes.clean.pnl, currency, true)}</strong>
+            </span>
+          )}
+        </div>
+        {mistakes.rows.length === 0 ? (
+          <p className="muted">Tag trades in a day's panel (the Tag button) to see what each mistake costs you.</p>
+        ) : (
+          <ul className="mistake-list">
+            {mistakes.rows.map((r) => (
+              <li key={r.tag}>
+                <span>{r.tag}</span>
+                <span className="muted">
+                  {r.trades} trade{r.trades === 1 ? '' : 's'}
+                </span>
+                <strong className={r.pnl < 0 ? 'neg' : r.pnl > 0 ? 'pos' : ''}>{formatMoney(r.pnl, currency, true)}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   )

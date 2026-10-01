@@ -1,13 +1,14 @@
 import type { DayFlag } from '../challenge'
 import { FLAG_INFO } from '../challenge'
 import type { DaySummary } from '../stats'
+import type { DayNote } from '../types'
 import { formatMoney, isoDay } from '../stats'
 
 interface Props {
   year: number
   month: number // 0-11
   days: Map<string, DaySummary>
-  notes: Record<string, { text: string }>
+  notes: Record<string, DayNote>
   selected: string | null
   today: string
   currency: string
@@ -65,7 +66,7 @@ export function Calendar({ year, month, days, notes, selected, today, currency, 
                 weekPnl += summary.pnl
                 weekHasTrades = true
               }
-              const hasNote = inMonth && !!notes[key]?.text.trim()
+              const hasNote = inMonth && !!notes[key]
               const dayFlags = (inMonth && flags?.get(key)) || []
               const cls = [
                 'cal-day',
