@@ -1,0 +1,98 @@
+import { useState } from 'react'
+import type { JournalData, Settings } from '../types'
+import { normalize } from '../storage'
+
+interface Props {
+  data: JournalData
+  onSettings: (s: Settings) => void
+  onReplace: (data: JournalData) => void
+  onClose: () => void
+}
+
+export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) {
+  const [message, setMessage] = useState('')
+  const { settings } = data
+
+  const exportBackup = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `trading-journal-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const restore = async (file: File) => {
+    try {
+      const restored = normalize(JSON.parse(await file.text()))
+      if (!confirm(`Replace your current journal with this backup (${restored.trades.length} trades)?`)) return
+      onReplace(restored)
+      setMessage('Backup restored.')
+    } catch (e) {
+      setMessage(`Couldn't read that backup: ${(e as Error).message}`)
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" role="dialog" aria-modal="true" aria-label="Settings" onClick={(e) => e.stopPropagation()}>
+        <header className="panel-head">
+          <h2>Settings</h2>
+          <button className="icon-btn" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </header>
+
+        <div className="mapping">
+          <label>
+            <span>Breakeven range (±)</span>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={settings.breakevenThreshold}
+              onChange={(e) => onSettings({ ...settings, breakevenThreshold: Math.max(0, Number(e.target.value) || 0) })}
+            />
+          </label>
+          <label>
+            <span>Currency</span>
+            <select value={settings.currency} onChange={(e) => onSettings({ ...settings, currency: e.target.value })}>
+              {['USD', 'EUR', 'GBP', 'CHF', 'AUD', 'CAD'].map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="muted">
+          Days with a net P&L within ±{settings.breakevenThreshold} show gray. Set it to e.g. 10 if you want tiny
+          scratch days counted as breakeven.
+        </p>
+
+        <h3>Your data</h3>
+        <p className="muted">
+          Everything is stored in this browser only. Export a backup now and then, or to move to another device.
+        </p>
+        <div className="row-buttons">
+          <button onClick={exportBackup}>Export backup</button>
+          <label className="button ghost">
+            Restore backup
+            <input type="file" accept=".json,application/json" hidden onChange={(e) => e.target.files?.[0] && restore(e.target.files[0])} />
+          </label>
+          <button
+            className="danger"
+            onClick={() => {
+              if (confirm('Delete all trades and journal entries? This cannot be undone.')) {
+                onReplace({ trades: [], notes: {}, settings })
+                setMessage('All data cleared.')
+              }
+            }}
+          >
+            Clear all data
+          </button>
+        </div>
+        {message && <p className="muted">{message}</p>}
+      </div>
+    </div>
+  )
+}
