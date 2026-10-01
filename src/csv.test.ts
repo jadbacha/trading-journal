@@ -40,10 +40,20 @@ describe('importing platform exports', () => {
     expect(mapping.date).toBe('soldTimestamp')
     expect(mapping.pnl).toBe('pnl')
     const { trades } = rowsToTrades(parsed, mapping, { subtractFees: false, dateOrder: 'auto' })
-    expect(trades.map((t) => [t.date, t.pnl, t.qty])).toEqual([
-      ['2026-10-01', 20, 1],
-      ['2026-10-01', -80, 2],
+    expect(trades.map((t) => [t.date, t.pnl, t.qty, t.side, t.time])).toEqual([
+      ['2026-10-01', 20, 1, 'Long', '09:35:10'],
+      ['2026-10-01', -80, 2, 'Short', '10:02:00'],
     ])
+  })
+
+  it('dates a Tradovate short by its buy-to-cover, even across midnight', () => {
+    const csv = [
+      'symbol,qty,pnl,boughtTimestamp,soldTimestamp',
+      'MNQZ6,1,$50.00,10/02/2026 00:10:00,10/01/2026 23:50:00',
+    ].join('\n')
+    const parsed = parseCsv(csv)
+    const { trades } = rowsToTrades(parsed, guessMapping(parsed.headers), { subtractFees: false, dateOrder: 'auto' })
+    expect(trades[0]).toMatchObject({ date: '2026-10-02', side: 'Short', time: '00:10:00' })
   })
 
   it('handles a NinjaTrader trades export and subtracts commission', () => {

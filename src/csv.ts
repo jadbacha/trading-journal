@@ -147,7 +147,9 @@ export function rowsToTrades(
   let skipped = 0
   const seen = new Map<string, number>()
   for (const row of parsed.rows) {
-    const date = parseDay(row[mapping.date], options.dateOrder)
+    const pair = tradovatePair(row, mapping, options.dateOrder)
+    const closeTime = pair?.closeTime ?? row[mapping.date]
+    const date = parseDay(closeTime, options.dateOrder)
     let pnl = parseMoney(row[mapping.pnl])
     if (!date || pnl === null) {
       skipped++
@@ -166,13 +168,33 @@ export function rowsToTrades(
       date,
       pnl: Math.round(pnl * 100) / 100,
       symbol: mapping.symbol ? row[mapping.symbol]?.trim() || undefined : undefined,
-      side: mapping.side ? row[mapping.side]?.trim() || undefined : undefined,
+      side: (mapping.side ? row[mapping.side]?.trim() : pair?.side) || undefined,
       qty: qty === null ? undefined : Math.abs(qty),
-      time: timeOf(row[mapping.date]),
+      time: timeOf(closeTime),
       source: 'import',
     })
   }
   return { trades, skipped }
+}
+
+/**
+ * Tradovate's Performance export has no side column, only boughtTimestamp and
+ * soldTimestamp. Whichever fill came first opened the trade: buy first is a long,
+ * sell first is a short, and the later of the two is when the P&L was realised.
+ */
+function tradovatePair(row: Record<string, string>, mapping: ColumnMapping, order: DateOrder) {
+  const bought = row.boughtTimestamp
+  const sold = row.soldTimestamp
+  if (!bought || !sold || (mapping.date !== 'boughtTimestamp' && mapping.date !== 'soldTimestamp')) return null
+  const sortKey = (raw: string) => {
+    const [h = '0', m = '0', sec = '0'] = (timeOf(raw) ?? '').replace(/\s?[AP]M$/i, '').split(':')
+    let hour = Number(h)
+    if (/PM/i.test(raw) && hour < 12) hour += 12
+    if (/AM/i.test(raw) && hour === 12) hour = 0
+    return `${parseDay(raw, order)} ${[hour, m, sec].map((x) => String(x).padStart(2, '0')).join(':')}`
+  }
+  const isLong = sortKey(bought) <= sortKey(sold)
+  return { side: isLong ? 'Long' : 'Short', closeTime: isLong ? sold : bought }
 }
 
 /** Stable id from the row's contents, so importing the same file twice adds nothing. */
