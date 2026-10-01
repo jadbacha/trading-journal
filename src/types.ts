@@ -1,3 +1,5 @@
+import type { ChallengeRules } from './challenge'
+
 export interface Trade {
   id: string
   /** Trading day the P&L belongs to, YYYY-MM-DD (taken from the exit/close time). */
@@ -25,6 +27,7 @@ export interface Settings {
   currency: string
   /** Round-trip commission per contract, subtracted from gross trades. */
   commissionPerContract: number
+  challenge: ChallengeRules
 }
 
 export interface JournalData {

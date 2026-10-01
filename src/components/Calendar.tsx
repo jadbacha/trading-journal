@@ -1,3 +1,5 @@
+import type { DayFlag } from '../challenge'
+import { FLAG_INFO } from '../challenge'
 import type { DaySummary } from '../stats'
 import { formatMoney, isoDay } from '../stats'
 
@@ -9,12 +11,20 @@ interface Props {
   selected: string | null
   today: string
   currency: string
+  flags?: Map<string, DayFlag[]>
   onSelect: (date: string) => void
+}
+
+/** Short form for narrow cells: +470, −1.2k. */
+function compact(n: number): string {
+  const sign = n > 0 ? '+' : n < 0 ? '−' : ''
+  const a = Math.abs(n)
+  return sign + (a >= 1000 ? `${(a / 1000).toFixed(a >= 10000 ? 0 : 1)}k` : Math.round(a).toString())
 }
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-export function Calendar({ year, month, days, notes, selected, today, currency, onSelect }: Props) {
+export function Calendar({ year, month, days, notes, selected, today, currency, flags, onSelect }: Props) {
   // Weeks start on Monday; pad the grid with the trailing/leading days of nearby months.
   const first = new Date(year, month, 1)
   const offset = (first.getDay() + 6) % 7
@@ -56,12 +66,14 @@ export function Calendar({ year, month, days, notes, selected, today, currency, 
                 weekHasTrades = true
               }
               const hasNote = inMonth && !!notes[key]?.text.trim()
+              const dayFlags = (inMonth && flags?.get(key)) || []
               const cls = [
                 'cal-day',
                 inMonth ? '' : 'outside',
                 summary ? `day-${summary.result}` : '',
                 key === selected ? 'selected' : '',
                 key === today ? 'today' : '',
+                dayFlags.some((f) => f !== 'over-cap') ? 'flag-risk' : '',
               ].join(' ')
               return (
                 <button
@@ -70,15 +82,27 @@ export function Calendar({ year, month, days, notes, selected, today, currency, 
                   role="gridcell"
                   disabled={!inMonth}
                   onClick={() => onSelect(key)}
-                  aria-label={`${d.toDateString()}${summary ? `, ${formatMoney(summary.pnl, currency, true)}` : ''}`}
+                  aria-label={[d.toDateString(), summary && formatMoney(summary.pnl, currency, true), ...dayFlags.map((f) => FLAG_INFO[f].label)]
+                    .filter(Boolean)
+                    .join(', ')}
                 >
                   <span className="cal-date">
                     {d.getDate()}
                     {hasNote && <span className="note-dot" title="Has journal entry" />}
+                    {dayFlags.map((f) => (
+                      <span key={f} className={`day-flag flag-${f}`} title={FLAG_INFO[f].label} aria-hidden>
+                        {FLAG_INFO[f].icon}
+                      </span>
+                    ))}
                   </span>
                   {summary && (
                     <>
-                      <span className="cal-pnl">{formatMoney(summary.pnl, currency, true)}</span>
+                      <span className="cal-pnl">
+                        <span className="pnl-full">{formatMoney(summary.pnl, currency, true)}</span>
+                        <span className="pnl-short" aria-hidden>
+                          {compact(summary.pnl)}
+                        </span>
+                      </span>
                       <span className="cal-trades">
                         {summary.trades} trade{summary.trades === 1 ? '' : 's'}
                       </span>

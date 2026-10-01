@@ -15,6 +15,7 @@
   --be: #9ca3af;
   --be-bg: rgba(156, 163, 175, 0.16);
   --be-border: rgba(156, 163, 175, 0.45);
+  --warn: #f59e0b;
   --radius: 10px;
   color-scheme: dark;
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -36,6 +37,7 @@
     --loss-bg: rgba(239, 68, 68, 0.15);
     --be: #6b7280;
     --be-bg: rgba(107, 114, 128, 0.15);
+    --warn: #b45309;
     color-scheme: light;
   }
 }
@@ -174,6 +176,8 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 .day-loss .cal-pnl { color: var(--loss); }
 .day-breakeven .cal-pnl { color: var(--be); }
 .cal-trades { font-size: 0.72rem; color: var(--muted); }
+.pnl-short { display: none; }
+.check + .mapping { margin-top: 12px; }
 .cal-week {
   display: flex;
   align-items: center;
@@ -289,7 +293,9 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
   .cal-row { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
   .cal-week-col, .cal-week { display: none; }
   .cal-day { min-height: 56px; padding: 4px; border-radius: 6px; }
-  .cal-pnl { font-size: 0.62rem; }
+  .cal-pnl { font-size: 0.72rem; }
+  .pnl-full { display: none; }
+  .pnl-short { display: inline; }
   .cal-trades { display: none; }
   .cal-weekday { font-size: 0.65rem; }
   .month-nav h2 { min-width: 0; flex: 1; font-size: 1rem; }
@@ -297,4 +303,51 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
   .add-trade { grid-template-columns: 1fr 1fr; }
   .add-trade button { grid-column: span 2; }
   .stat-value { font-size: 1.05rem; }
+}
+
+/* Challenge tracker */
+.challenge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 16px;
+  margin-bottom: 16px;
+}
+.challenge-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.challenge-head h2 { font-size: 1rem; }
+.challenge-balance { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.challenge-balance strong { color: var(--text); }
+.challenge-actions { display: flex; align-items: center; gap: 8px; }
+.meters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.meter { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.meter-top { display: flex; flex-direction: column; gap: 2px; }
+.meter-value { font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.meter-track { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.meter-fill { height: 100%; border-radius: 999px; transition: width 0.3s; }
+.meter-detail { font-size: 0.75rem; color: var(--muted); }
+.meter-value.tone-good { color: var(--profit); }
+.meter-value.tone-bad { color: var(--loss); }
+.meter-value.tone-warn { color: var(--warn); }
+.meter-fill.tone-good { background: var(--profit); }
+.meter-fill.tone-bad { background: var(--loss); }
+.meter-fill.tone-warn { background: var(--warn); }
+.meter-fill.tone-neutral { background: var(--be); }
+.tone-bg-good { background: var(--profit-bg); color: var(--profit); }
+.tone-bg-bad { background: var(--loss-bg); color: var(--loss); }
+.tone-bg-neutral { background: var(--be-bg); color: var(--be); }
+
+/* Rule alerts */
+.cal-day.flag-risk { box-shadow: inset 0 0 0 2px var(--warn); }
+.day-flag { font-size: 0.75rem; line-height: 1; }
+.flag-near-limit { color: var(--warn); }
+.flag-limit-hit { color: var(--loss); }
+.flag-over-cap { color: var(--warn); }
+.flag-note { margin: 6px 0 0; font-size: 0.85rem; font-weight: 600; }
+
+@media (max-width: 1100px) {
+  .meters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .day-flag { font-size: 0.6rem; }
 }

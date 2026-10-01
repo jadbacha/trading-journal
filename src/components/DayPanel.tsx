@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { DayFlag } from '../challenge'
+import { FLAG_INFO } from '../challenge'
 import type { DayNote, Trade } from '../types'
 import type { DaySummary } from '../stats'
 import { formatMoney, netPnl } from '../stats'
@@ -11,6 +13,7 @@ interface Props {
   note: DayNote | undefined
   currency: string
   commission: number
+  flags?: DayFlag[]
   onNoteChange: (note: DayNote) => void
   onAddTrade: (trade: Omit<Trade, 'id' | 'date' | 'source'>) => void
   onDeleteTrade: (id: string) => void
@@ -26,6 +29,7 @@ export function DayPanel({
   note,
   currency,
   commission,
+  flags,
   onNoteChange,
   onAddTrade,
   onDeleteTrade,
@@ -68,6 +72,11 @@ export function DayPanel({
           ) : (
             <p className="muted">No trades logged</p>
           )}
+          {flags?.map((f) => (
+            <p key={f} className={`flag-note flag-${f}`}>
+              {FLAG_INFO[f].icon} {FLAG_INFO[f].label}
+            </p>
+          ))}
           {summary && summary.fees > 0 && (
             <p className="muted">after {formatMoney(summary.fees, currency)} commissions</p>
           )}

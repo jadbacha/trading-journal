@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ChallengeRules } from '../challenge'
 import type { JournalData, Settings } from '../types'
 import { normalize } from '../storage'
 
@@ -12,6 +13,19 @@ interface Props {
 export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) {
   const [message, setMessage] = useState('')
   const { settings } = data
+  const rules = settings.challenge
+  const setRules = (patch: Partial<ChallengeRules>) => onSettings({ ...settings, challenge: { ...rules, ...patch } })
+  const amount = (key: 'startBalance' | 'profitTarget' | 'dailyLossLimit' | 'maxDrawdown' | 'consistencyPct' | 'minTradingDays', label: string) => (
+    <label>
+      <span>{label}</span>
+      <input
+        type="number"
+        min={0}
+        value={rules[key]}
+        onChange={(e) => setRules({ [key]: Math.max(0, Number(e.target.value) || 0) })}
+      />
+    </label>
+  )
 
   const exportBackup = () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -84,6 +98,36 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
           Days with a net P&L within ±{settings.breakevenThreshold} show gray. Set it to e.g. 10 if you want tiny
           scratch days counted as breakeven.
         </p>
+
+        <h3>Challenge</h3>
+        <label className="check">
+          <input type="checkbox" checked={rules.enabled} onChange={(e) => setRules({ enabled: e.target.checked })} />
+          Track a prop-firm challenge
+        </label>
+        {rules.enabled && (
+          <>
+            <div className="mapping">
+              {amount('startBalance', 'Starting balance')}
+              {amount('profitTarget', 'Profit target')}
+              {amount('dailyLossLimit', 'Daily loss limit')}
+              {amount('maxDrawdown', 'Max drawdown')}
+              {amount('consistencyPct', 'Consistency (% of target)')}
+              {amount('minTradingDays', 'Min trading days')}
+              <label>
+                <span>Challenge start date</span>
+                <input type="date" value={rules.startDate} onChange={(e) => setRules({ startDate: e.target.value })} />
+              </label>
+            </div>
+            <label className="check">
+              <input type="checkbox" checked={rules.trailing} onChange={(e) => setRules({ trailing: e.target.checked })} />
+              Drawdown trails the highest end-of-day balance
+            </label>
+            <p className="muted">
+              Only trades on or after the start date count. Leave it empty to count everything. Breaches are
+              checked on end-of-day balances, so an intraday dip won't show here.
+            </p>
+          </>
+        )}
 
         <h3>Your data</h3>
         <p className="muted">

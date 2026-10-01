@@ -6,6 +6,12 @@ A simple journal for a The Trading Pit futures account. Each day on the calendar
 - **red** when it's negative
 - **gray** when it's breakeven (exactly 0, or within a ± range you set in Settings)
 
+A **challenge tracker** above the calendar follows your prop-firm objectives: profit target, consistency (best day
+vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, and trading
+days. It's preset for The Trading Pit Futures Prime $50,000 challenge, and **Settings → Challenge** changes the rules.
+Days that came within 80% of the daily loss limit get an orange ⚠, days that hit it get ⛔, and days over the
+consistency cap get ⚑.
+
 Click a day to write a journal entry, rate how well you followed your plan, see that day's trades or add P&L by hand.
 
 ## Getting your trades in

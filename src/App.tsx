@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { challengeStatus } from './challenge'
 import { Calendar } from './components/Calendar'
+import { ChallengeCard } from './components/ChallengeCard'
 import { DayPanel } from './components/DayPanel'
 import { ImportDialog } from './components/ImportDialog'
 import { SettingsDialog } from './components/SettingsDialog'
@@ -25,6 +27,11 @@ export default function App() {
   const month = useMemo(
     () => periodStats([...days.values()].filter((d) => d.date.startsWith(monthPrefix))),
     [days, monthPrefix],
+  )
+  const today = isoDay(now)
+  const challenge = useMemo(
+    () => (settings.challenge.enabled ? challengeStatus(days.values(), settings.challenge, today) : null),
+    [days, settings.challenge, today],
   )
   const tradingDays = month.green + month.red + month.gray
   const existingIds = useMemo(() => new Set(data.trades.map((t) => t.id)), [data.trades])
@@ -53,6 +60,15 @@ export default function App() {
 
       <main className={selected ? 'with-panel' : ''}>
         <section className="month">
+          {challenge && (
+            <ChallengeCard
+              rules={settings.challenge}
+              status={challenge}
+              currency={settings.currency}
+              onEdit={() => setDialog('settings')}
+            />
+          )}
+
           <div className="month-nav">
             <button className="icon-btn" onClick={() => shift(-1)} aria-label="Previous month">
               ‹
@@ -100,8 +116,9 @@ export default function App() {
             days={days}
             notes={data.notes}
             selected={selected}
-            today={isoDay(now)}
+            today={today}
             currency={settings.currency}
+            flags={challenge?.flags}
             onSelect={setSelected}
           />
 
@@ -127,6 +144,7 @@ export default function App() {
             note={data.notes[selected]}
             currency={settings.currency}
             commission={settings.commissionPerContract}
+            flags={challenge?.flags.get(selected)}
             onClose={() => setSelected(null)}
             onNoteChange={(note) =>
               setData((d) => {

@@ -1,3 +1,4 @@
+import { defaultRules } from './challenge'
 import type { JournalData } from './types'
 
 const KEY = 'trading-journal:v1'
@@ -5,7 +6,7 @@ const KEY = 'trading-journal:v1'
 export const emptyData = (): JournalData => ({
   trades: [],
   notes: {},
-  settings: { breakevenThreshold: 0, currency: 'USD', commissionPerContract: 1.3 },
+  settings: { breakevenThreshold: 0, currency: 'USD', commissionPerContract: 1.3, challenge: defaultRules() },
 })
 
 export function loadData(): JournalData {
@@ -37,6 +38,10 @@ export function normalize(value: unknown): JournalData {
       (t) => t && typeof t.date === 'string' && typeof t.pnl === 'number',
     ),
     notes: v.notes && typeof v.notes === 'object' ? v.notes : {},
-    settings: { ...base.settings, ...v.settings },
+    settings: {
+      ...base.settings,
+      ...v.settings,
+      challenge: { ...base.settings.challenge, ...v.settings?.challenge },
+    },
   }
 }
