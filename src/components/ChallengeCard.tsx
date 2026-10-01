@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import type { ChallengeRules, ChallengeStatus } from '../challenge'
-import { NEAR_LIMIT } from '../challenge'
+import { formatRemaining, NEAR_LIMIT } from '../challenge'
 import { formatMoney } from '../stats'
 
 interface Props {
@@ -23,6 +24,27 @@ function Meter({ label, value, detail, ratio, tone }: { label: string; value: st
         <div className={`meter-fill tone-${tone}`} style={{ width: `${pct}%` }} />
       </div>
       <span className="meter-detail">{detail}</span>
+    </div>
+  )
+}
+
+/** Live countdown to the challenge deadline, refreshed every 15 seconds. */
+function Countdown({ endsAt, done }: { endsAt: string; done: boolean }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 15_000)
+    return () => clearInterval(id)
+  }, [])
+  const end = Date.parse(endsAt)
+  if (Number.isNaN(end)) return null
+  const left = end - now
+  const deadline = new Date(end).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  const tone = left <= 0 ? (done ? 'neutral' : 'bad') : left < 3 * 86_400_000 ? 'warn' : 'neutral'
+  return (
+    <div className="countdown" title={`Deadline: ${deadline}`}>
+      <span className="stat-label">Remaining time</span>
+      <strong className={`countdown-value tone-${tone}`}>{left > 0 ? formatRemaining(left) : "Time's up"}</strong>
+      <span className="meter-detail">ends {deadline}</span>
     </div>
   )
 }
@@ -53,6 +75,7 @@ export function ChallengeCard({ rules, status: s, currency, onEdit }: Props) {
             Balance <strong>{money(s.balance)}</strong>
           </span>
         </div>
+        {rules.endsAt && <Countdown endsAt={rules.endsAt} done={s.passed} />}
         <div className="challenge-actions">
           <span className={`badge tone-bg-${badge.tone}`}>{badge.text}</span>
           <button className="ghost small" onClick={onEdit}>

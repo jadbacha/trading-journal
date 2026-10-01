@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ChallengeRules } from '../challenge'
+import { formatRemaining, parseDuration } from '../challenge'
 import type { JournalData, Settings } from '../types'
 import { normalize } from '../storage'
 
@@ -10,8 +11,17 @@ interface Props {
   onClose: () => void
 }
 
+/** ISO timestamp → value for a datetime-local input, in the viewer's timezone. */
+function toLocalInput(iso: string): string {
+  const d = new Date(iso)
+  if (!iso || Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) {
   const [message, setMessage] = useState('')
+  const [remaining, setRemaining] = useState('')
   const { settings } = data
   const rules = settings.challenge
   const setRules = (patch: Partial<ChallengeRules>) => onSettings({ ...settings, challenge: { ...rules, ...patch } })
@@ -117,6 +127,36 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
                 <span>Challenge start date</span>
                 <input type="date" value={rules.startDate} onChange={(e) => setRules({ startDate: e.target.value })} />
               </label>
+            </div>
+            <div className="mapping deadline">
+              <label>
+                <span>Challenge ends (your local time)</span>
+                <input
+                  type="datetime-local"
+                  value={toLocalInput(rules.endsAt)}
+                  onChange={(e) => setRules({ endsAt: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                />
+              </label>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  const ms = parseDuration(remaining)
+                  if (ms === null) return setMessage('Enter the time left like 15d 12h 26m')
+                  setRules({ endsAt: new Date(Date.now() + ms).toISOString() })
+                  setRemaining('')
+                  setMessage(`Deadline set: ${formatRemaining(ms)} from now.`)
+                }}
+              >
+                <label>
+                  <span>…or paste the time left from your dashboard</span>
+                  <div className="inline-field">
+                    <input placeholder="15d 12h 26m" value={remaining} onChange={(e) => setRemaining(e.target.value)} />
+                    <button type="submit" className="ghost">
+                      Set
+                    </button>
+                  </div>
+                </label>
+              </form>
             </div>
             <label className="check">
               <input type="checkbox" checked={rules.trailing} onChange={(e) => setRules({ trailing: e.target.checked })} />

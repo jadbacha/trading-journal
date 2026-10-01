@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { challengeStatus, defaultRules } from './challenge'
+import { challengeStatus, defaultRules, formatRemaining, parseDuration } from './challenge'
 import type { DaySummary } from './stats'
 
 const day = (date: string, pnl: number): DaySummary => ({ date, pnl, fees: 0, trades: 1, result: pnl > 0 ? 'profit' : pnl < 0 ? 'loss' : 'breakeven' })
@@ -61,5 +61,24 @@ describe('challengeStatus', () => {
     const s = challengeStatus([day('2026-09-01', -500), day('2026-10-01', 200)], { ...defaultRules(), startDate: '2026-09-15' }, '')
     expect(s.balance).toBe(50200)
     expect(s.tradingDays).toBe(1)
+  })
+})
+
+describe('time limit', () => {
+  it('parses dashboard-style durations', () => {
+    expect(parseDuration('15d 12h 26m')).toBe(((15 * 24 + 12) * 60 + 26) * 60_000)
+    expect(parseDuration('3D')).toBe(3 * 86_400_000)
+    expect(parseDuration('soon')).toBeNull()
+  })
+
+  it('formats remaining time like the dashboard', () => {
+    expect(formatRemaining(parseDuration('15d 12h 26m')!)).toBe('15d 12h 26m')
+    expect(formatRemaining(parseDuration('5h 3m')! + 59_000)).toBe('5h 3m')
+    expect(formatRemaining(-1000)).toBe('0m')
+  })
+
+  it('defaults to the deadline shown on the dashboard', () => {
+    const shownAt = Date.parse('2026-10-01T23:34:00Z')
+    expect(formatRemaining(Date.parse(defaultRules().endsAt) - shownAt)).toBe('15d 12h 26m')
   })
 })
