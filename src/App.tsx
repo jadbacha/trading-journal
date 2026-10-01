@@ -18,8 +18,8 @@ export default function App() {
 
   const { settings } = data
   const days = useMemo(
-    () => summarizeDays(data.trades, settings.breakevenThreshold),
-    [data.trades, settings.breakevenThreshold],
+    () => summarizeDays(data.trades, settings),
+    [data.trades, settings],
   )
   const monthPrefix = `${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}`
   const month = useMemo(
@@ -126,6 +126,7 @@ export default function App() {
               .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))}
             note={data.notes[selected]}
             currency={settings.currency}
+            commission={settings.commissionPerContract}
             onClose={() => setSelected(null)}
             onNoteChange={(note) =>
               setData((d) => {
@@ -150,6 +151,7 @@ export default function App() {
         <ImportDialog
           existingIds={existingIds}
           currency={settings.currency}
+          commission={settings.commissionPerContract}
           onClose={() => setDialog(null)}
           onImport={(trades) => {
             setData((d) => ({ ...d, trades: [...d.trades, ...trades] }))

@@ -24,6 +24,12 @@ Click **Import trades** and pick the file. Columns are detected automatically (y
 fees are subtracted when the P&L column isn't already net. Importing the same file again won't create
 duplicates, so you can just export your full history each time.
 
+### Commissions
+
+Tradovate's Performance export shows P&L **before** commissions. Set your round-trip commission per contract in
+**Settings** and it's subtracted from every imported trade, including ones imported earlier, so a small gross win
+that fees turn into a loss shows red.
+
 ## Data
 
 Everything is stored in your browser (`localStorage`). Nothing is uploaded anywhere. Use **Settings → Export backup**
@@ -37,5 +43,7 @@ npm run dev      # http://localhost:5173
 npm test         # CSV parsing + day colouring tests
 npm run build    # static site in dist/, deployable to GitHub Pages, Netlify, Vercel…
 ```
+
+Every push to `main` runs the tests and deploys to GitHub Pages (`.github/workflows/deploy.yml`).
 
 Built with Vite, React and TypeScript.

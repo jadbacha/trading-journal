@@ -167,6 +167,7 @@ export function rowsToTrades(
       id: n === 0 ? base : `${base}-${n}`,
       date,
       pnl: Math.round(pnl * 100) / 100,
+      gross: !(options.subtractFees && mapping.fees) && !isNetColumn(mapping.pnl) ? true : undefined,
       symbol: mapping.symbol ? row[mapping.symbol]?.trim() || undefined : undefined,
       side: (mapping.side ? row[mapping.side]?.trim() : pair?.side) || undefined,
       qty: qty === null ? undefined : Math.abs(qty),

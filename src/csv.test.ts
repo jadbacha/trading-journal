@@ -94,9 +94,29 @@ describe('day colouring', () => {
         { id: 'b', date: '2026-10-01', pnl: -100, source: 'manual' },
         { id: 'c', date: '2026-10-02', pnl: -30, source: 'manual' },
       ],
-      0,
+      { breakevenThreshold: 0, commissionPerContract: 0 },
     )
     expect(days.get('2026-10-01')).toMatchObject({ pnl: 0, trades: 2, result: 'breakeven' })
     expect(days.get('2026-10-02')?.result).toBe('loss')
+  })
+
+  it('subtracts commission per contract from gross trades only', () => {
+    const trades = [
+      { id: 'a', date: '2026-10-01', pnl: 474, qty: 3, gross: true, source: 'import' as const },
+      { id: 'b', date: '2026-10-01', pnl: -20, source: 'manual' as const },
+      { id: 'c', date: '2026-10-02', pnl: 4, qty: 2, gross: true, source: 'import' as const },
+    ]
+    const days = summarizeDays(trades, { breakevenThreshold: 0, commissionPerContract: 2.5 })
+    expect(days.get('2026-10-01')).toMatchObject({ pnl: 446.5, fees: 7.5, result: 'profit' })
+    // A small gross win that commissions turn into a loss shows red.
+    expect(days.get('2026-10-02')).toMatchObject({ pnl: -1, fees: 5, result: 'loss' })
+  })
+
+  it('marks Tradovate P&L as gross but not net or fee-adjusted columns', () => {
+    const opts = { subtractFees: false, dateOrder: 'auto' as const }
+    const gross = parseCsv('soldTimestamp,pnl\n10/01/2026 10:00:00,$10.00')
+    expect(rowsToTrades(gross, guessMapping(gross.headers), opts).trades[0].gross).toBe(true)
+    const net = parseCsv('Date,Net P/L\n2026-10-01,10')
+    expect(rowsToTrades(net, guessMapping(net.headers), opts).trades[0].gross).toBeUndefined()
   })
 })

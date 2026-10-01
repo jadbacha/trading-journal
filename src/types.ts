@@ -2,8 +2,10 @@ export interface Trade {
   id: string
   /** Trading day the P&L belongs to, YYYY-MM-DD (taken from the exit/close time). */
   date: string
-  /** Net P&L after fees, in account currency. */
+  /** P&L in account currency, as imported or entered. */
   pnl: number
+  /** True when `pnl` is before commissions (e.g. Tradovate's Performance export). */
+  gross?: boolean
   symbol?: string
   side?: string
   qty?: number
@@ -21,6 +23,8 @@ export interface Settings {
   /** A day whose |net P&L| is at or below this amount counts as breakeven (gray). */
   breakevenThreshold: number
   currency: string
+  /** Round-trip commission per contract, subtracted from gross trades. */
+  commissionPerContract: number
 }
 
 export interface JournalData {

@@ -63,7 +63,23 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
               ))}
             </select>
           </label>
+          <label>
+            <span>Commission per contract (round trip)</span>
+            <input
+              type="number"
+              min={0}
+              step={0.01}
+              value={settings.commissionPerContract}
+              onChange={(e) =>
+                onSettings({ ...settings, commissionPerContract: Math.max(0, Number(e.target.value) || 0) })
+              }
+            />
+          </label>
         </div>
+        <p className="muted">
+          The commission is subtracted from trades whose P&L came in before fees (like Tradovate's Performance
+          export), on every day, including ones already imported.
+        </p>
         <p className="muted">
           Days with a net P&L within ±{settings.breakevenThreshold} show gray. Set it to e.g. 10 if you want tiny
           scratch days counted as breakeven.

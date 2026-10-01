@@ -1,27 +1,42 @@
-import type { DayResult, Trade } from './types'
+import type { DayResult, Settings, Trade } from './types'
 
 export interface DaySummary {
   date: string
+  /** Net of commissions. */
   pnl: number
+  fees: number
   trades: number
   result: DayResult
 }
+
+/** Commission charged on a trade: only gross trades owe it, once per contract round trip. */
+export function tradeFees(t: Trade, commissionPerContract: number): number {
+  return t.gross ? Math.round((t.qty ?? 1) * commissionPerContract * 100) / 100 : 0
+}
+
+export const netPnl = (t: Trade, commissionPerContract: number) =>
+  Math.round((t.pnl - tradeFees(t, commissionPerContract)) * 100) / 100
 
 export function classify(pnl: number, breakevenThreshold: number): DayResult {
   if (Math.abs(pnl) <= breakevenThreshold) return 'breakeven'
   return pnl > 0 ? 'profit' : 'loss'
 }
 
-export function summarizeDays(trades: Trade[], breakevenThreshold: number): Map<string, DaySummary> {
+export function summarizeDays(
+  trades: Trade[],
+  { breakevenThreshold, commissionPerContract }: Pick<Settings, 'breakevenThreshold' | 'commissionPerContract'>,
+): Map<string, DaySummary> {
   const days = new Map<string, DaySummary>()
   for (const t of trades) {
-    const d = days.get(t.date) ?? { date: t.date, pnl: 0, trades: 0, result: 'breakeven' as DayResult }
-    d.pnl += t.pnl
+    const d = days.get(t.date) ?? { date: t.date, pnl: 0, fees: 0, trades: 0, result: 'breakeven' as DayResult }
+    d.pnl += netPnl(t, commissionPerContract)
+    d.fees += tradeFees(t, commissionPerContract)
     d.trades++
     days.set(t.date, d)
   }
   for (const d of days.values()) {
     d.pnl = Math.round(d.pnl * 100) / 100
+    d.fees = Math.round(d.fees * 100) / 100
     d.result = classify(d.pnl, breakevenThreshold)
   }
   return days

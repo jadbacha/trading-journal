@@ -5,7 +5,7 @@ const KEY = 'trading-journal:v1'
 export const emptyData = (): JournalData => ({
   trades: [],
   notes: {},
-  settings: { breakevenThreshold: 0, currency: 'USD' },
+  settings: { breakevenThreshold: 0, currency: 'USD', commissionPerContract: 0 },
 })
 
 export function loadData(): JournalData {

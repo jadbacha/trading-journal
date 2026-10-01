@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { DayNote, Trade } from '../types'
 import type { DaySummary } from '../stats'
-import { formatMoney } from '../stats'
+import { formatMoney, netPnl } from '../stats'
 import { parseMoney } from '../csv'
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
   trades: Trade[]
   note: DayNote | undefined
   currency: string
+  commission: number
   onNoteChange: (note: DayNote) => void
   onAddTrade: (trade: Omit<Trade, 'id' | 'date' | 'source'>) => void
   onDeleteTrade: (id: string) => void
@@ -24,6 +25,7 @@ export function DayPanel({
   trades,
   note,
   currency,
+  commission,
   onNoteChange,
   onAddTrade,
   onDeleteTrade,
@@ -66,6 +68,9 @@ export function DayPanel({
           ) : (
             <p className="muted">No trades logged</p>
           )}
+          {summary && summary.fees > 0 && (
+            <p className="muted">after {formatMoney(summary.fees, currency)} commissions</p>
+          )}
         </div>
         <button className="icon-btn" onClick={onClose} aria-label="Close day">
           ×
@@ -100,18 +105,21 @@ export function DayPanel({
         <h3>Trades {trades.length > 0 && <span className="muted">({trades.length})</span>}</h3>
         {trades.length > 0 && (
           <ul className="trade-list">
-            {trades.map((t) => (
-              <li key={t.id}>
-                <span className="trade-meta">
-                  {[t.time, t.symbol, t.side, t.qty != null ? `×${t.qty}` : null].filter(Boolean).join(' · ') ||
-                    (t.source === 'manual' ? 'Manual entry' : 'Trade')}
-                </span>
-                <span className={t.pnl > 0 ? 'pos' : t.pnl < 0 ? 'neg' : ''}>{formatMoney(t.pnl, currency, true)}</span>
-                <button className="icon-btn small" onClick={() => onDeleteTrade(t.id)} aria-label="Delete trade">
-                  ×
-                </button>
-              </li>
-            ))}
+            {trades.map((t) => {
+              const net = netPnl(t, commission)
+              return (
+                <li key={t.id}>
+                  <span className="trade-meta">
+                    {[t.time, t.symbol, t.side, t.qty != null ? `×${t.qty}` : null].filter(Boolean).join(' · ') ||
+                      (t.source === 'manual' ? 'Manual entry' : 'Trade')}
+                  </span>
+                  <span className={net > 0 ? 'pos' : net < 0 ? 'neg' : ''}>{formatMoney(net, currency, true)}</span>
+                  <button className="icon-btn small" onClick={() => onDeleteTrade(t.id)} aria-label="Delete trade">
+                    ×
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         )}
         <form className="add-trade" onSubmit={add}>

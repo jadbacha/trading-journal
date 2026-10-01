@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import type { ColumnMapping, DateOrder, ParsedCsv } from '../csv'
 import { guessMapping, isNetColumn, parseCsv, rowsToTrades } from '../csv'
 import type { Trade } from '../types'
-import { formatMoney } from '../stats'
+import { formatMoney, netPnl } from '../stats'
 
 interface Props {
   existingIds: Set<string>
   currency: string
+  commission: number
   onImport: (trades: Trade[]) => void
   onClose: () => void
 }
@@ -20,7 +21,7 @@ const FIELDS: { key: keyof ColumnMapping; label: string; required?: boolean }[] 
   { key: 'qty', label: 'Quantity' },
 ]
 
-export function ImportDialog({ existingIds, currency, onImport, onClose }: Props) {
+export function ImportDialog({ existingIds, currency, commission, onImport, onClose }: Props) {
   const [fileName, setFileName] = useState('')
   const [parsed, setParsed] = useState<ParsedCsv | null>(null)
   const [mapping, setMapping] = useState<ColumnMapping | null>(null)
@@ -52,11 +53,12 @@ export function ImportDialog({ existingIds, currency, onImport, onClose }: Props
       trades: fresh,
       duplicates: trades.length - fresh.length,
       skipped,
-      total: fresh.reduce((s, t) => s + t.pnl, 0),
+      total: fresh.reduce((s, t) => s + netPnl(t, commission), 0),
+      gross: fresh.some((t) => t.gross),
       from: dates[0],
       to: dates[dates.length - 1],
     }
-  }, [parsed, mapping, subtractFees, dateOrder, existingIds])
+  }, [parsed, mapping, subtractFees, dateOrder, existingIds, commission])
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -136,6 +138,13 @@ export function ImportDialog({ existingIds, currency, onImport, onClose }: Props
                 <div>
                   Net: <strong className={preview.total >= 0 ? 'pos' : 'neg'}>{formatMoney(preview.total, currency, true)}</strong>
                 </div>
+                {preview.gross && (
+                  <div className="muted">
+                    {commission > 0
+                      ? `After ${formatMoney(commission, currency)} commission per contract.`
+                      : 'This P&L is before commissions. Set your commission per contract in Settings.'}
+                  </div>
+                )}
                 {(preview.duplicates > 0 || preview.skipped > 0) && (
                   <div className="muted">
                     {preview.duplicates > 0 && `${preview.duplicates} already imported. `}
