@@ -362,3 +362,12 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 @media (max-width: 640px) {
   .countdown { margin-left: 0; text-align: left; order: 3; width: 100%; }
 }
+
+/* Performance */
+.perf { margin-bottom: 16px; }
+.perf-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.perf-head h3 { margin: 0; }
+.perf .stats { margin-bottom: 0; }
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.segmented button { background: transparent; color: var(--muted); border: none; border-radius: 0; padding: 5px 12px; font-size: 0.8rem; }
+.segmented button.on { background: var(--surface-2); color: var(--text); font-weight: 600; }

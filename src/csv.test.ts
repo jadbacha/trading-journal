@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { guessMapping, parseCsv, parseDay, parseMoney, rowsToTrades } from './csv'
-import { classify, summarizeDays } from './stats'
+import { classify, summarizeDays, tradeStats } from './stats'
 
 describe('parseMoney', () => {
   it.each([
@@ -118,5 +118,24 @@ describe('day colouring', () => {
     expect(rowsToTrades(gross, guessMapping(gross.headers), opts).trades[0].gross).toBe(true)
     const net = parseCsv('Date,Net P/L\n2026-10-01,10')
     expect(rowsToTrades(net, guessMapping(net.headers), opts).trades[0].gross).toBeUndefined()
+  })
+})
+
+describe('tradeStats', () => {
+  const t = (pnl: number, extra: object = {}) => ({ id: String(Math.random()), date: '2026-10-01', pnl, source: 'manual' as const, ...extra })
+
+  it('computes win rate, averages and profit factor after commissions', () => {
+    // The 1.20 gross win nets to -0.10 after a $1.30 commission, so it counts as a loss.
+    const trades = [t(300), t(100), t(-100), t(-50), t(0), t(1.2, { qty: 1, gross: true })]
+    const s = tradeStats(trades, 1.3)
+    expect(s).toMatchObject({ trades: 6, wins: 2, losses: 3, breakeven: 1, avgWin: 200, avgLoss: 50.03 })
+    expect(s.winRate).toBeCloseTo(0.4)
+    expect(s.profitFactor).toBeCloseTo(400 / 150.1)
+    expect(s.winLossRatio).toBeCloseTo(200 / 50.03)
+  })
+
+  it('handles one-sided and empty histories', () => {
+    expect(tradeStats([t(50)], 0)).toMatchObject({ winRate: 1, profitFactor: Infinity, winLossRatio: null })
+    expect(tradeStats([], 0)).toMatchObject({ trades: 0, winRate: null, profitFactor: null })
   })
 })

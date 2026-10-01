@@ -3,10 +3,11 @@ import { challengeStatus } from './challenge'
 import { Calendar } from './components/Calendar'
 import { ChallengeCard } from './components/ChallengeCard'
 import { DayPanel } from './components/DayPanel'
+import { Performance } from './components/Performance'
 import { ImportDialog } from './components/ImportDialog'
 import { SettingsDialog } from './components/SettingsDialog'
 import { loadData, saveData } from './storage'
-import { formatMoney, isoDay, periodStats, summarizeDays } from './stats'
+import { formatMoney, isoDay, periodStats, summarizeDays, tradeStats } from './stats'
 import type { JournalData } from './types'
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() })
   const [selected, setSelected] = useState<string | null>(null)
   const [dialog, setDialog] = useState<'import' | 'settings' | null>(null)
+  const [perfScope, setPerfScope] = useState<'month' | 'all'>('month')
 
   useEffect(() => saveData(data), [data])
 
@@ -32,6 +34,14 @@ export default function App() {
   const challenge = useMemo(
     () => (settings.challenge.enabled ? challengeStatus(days.values(), settings.challenge, today) : null),
     [days, settings.challenge, today],
+  )
+  const perf = useMemo(
+    () =>
+      tradeStats(
+        perfScope === 'month' ? data.trades.filter((t) => t.date.startsWith(monthPrefix)) : data.trades,
+        settings.commissionPerContract,
+      ),
+    [data.trades, perfScope, monthPrefix, settings.commissionPerContract],
   )
   const tradingDays = month.green + month.red + month.gray
   const existingIds = useMemo(() => new Set(data.trades.map((t) => t.id)), [data.trades])
@@ -109,6 +119,14 @@ export default function App() {
               </span>
             </div>
           </div>
+
+          <Performance
+            stats={perf}
+            scope={perfScope}
+            monthName={monthName}
+            currency={settings.currency}
+            onScope={setPerfScope}
+          />
 
           <Calendar
             year={cursor.year}

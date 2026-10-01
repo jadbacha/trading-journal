@@ -67,6 +67,53 @@ export function periodStats(days: DaySummary[]): PeriodStats {
   return s
 }
 
+export interface TradeStats {
+  trades: number
+  wins: number
+  losses: number
+  breakeven: number
+  /** Wins as a share of decided trades (breakeven trades excluded), 0–1, or null with none. */
+  winRate: number | null
+  avgWin: number
+  avgLoss: number
+  /** Average win divided by average loss, or null when either side is missing. */
+  winLossRatio: number | null
+  /** Total won divided by total lost; Infinity with wins and no losses, null with neither. */
+  profitFactor: number | null
+}
+
+/** Trade-level performance, using P&L after commissions. */
+export function tradeStats(trades: Trade[], commissionPerContract: number): TradeStats {
+  let won = 0
+  let lost = 0
+  let wins = 0
+  let losses = 0
+  for (const t of trades) {
+    const pnl = netPnl(t, commissionPerContract)
+    if (pnl > 0) {
+      wins++
+      won += pnl
+    } else if (pnl < 0) {
+      losses++
+      lost -= pnl
+    }
+  }
+  const round = (n: number) => Math.round(n * 100) / 100
+  const avgWin = wins ? round(won / wins) : 0
+  const avgLoss = losses ? round(lost / losses) : 0
+  return {
+    trades: trades.length,
+    wins,
+    losses,
+    breakeven: trades.length - wins - losses,
+    winRate: wins + losses ? wins / (wins + losses) : null,
+    avgWin,
+    avgLoss,
+    winLossRatio: wins && losses ? avgWin / avgLoss : null,
+    profitFactor: losses ? won / lost : wins ? Infinity : null,
+  }
+}
+
 export const isoDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 

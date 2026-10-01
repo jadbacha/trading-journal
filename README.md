@@ -12,6 +12,10 @@ days, plus a countdown to the challenge deadline. It's preset for The Trading Pi
 Days that came within 80% of the daily loss limit get an orange ⚠, days that hit it get ⛔, and days over the
 consistency cap get ⚑.
 
+Below the monthly summary, **Performance** shows win rate, average win, average loss (with the win/loss ratio) and
+profit factor for the month on screen or all time. These are per trade and after commissions; breakeven trades
+don't count toward the win rate.
+
 Click a day to write a journal entry, rate how well you followed your plan, see that day's trades or add P&L by hand.
 
 ## Getting your trades in
