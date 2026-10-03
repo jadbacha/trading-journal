@@ -37,6 +37,21 @@ Click a day to open its journal:
 
 You can also add P&L by hand there.
 
+## Following your process
+
+- **Weekly review** (button at the top, or click a week's total on the calendar): the week's P&L, win rate, how many
+  days had a plan, your average plan rating, what mistakes cost and your discipline streak, plus notes on what went
+  well and **one thing to fix next week**, which then shows on every day of that next week.
+- **Discipline streak**: consecutive trading days with a pre-market plan and a 4★+ "followed my plan" rating.
+- **Equity curve**: each account's end-of-day balance against its drawdown floor and profit target, with a hover
+  readout of the room left.
+- **Where you make and lose money**: net P&L and win rate by hour of exit, weekday and product (MNQ, MES…).
+- **Phases**: a passed account offers **Start Phase 2** (then **Funded**), which creates the next account with the same
+  rules, linked to the previous one; its cost stays on the first account so ROI stays right.
+- **Drawdown breach warning**: if an account's balance closes at or below its floor, the tracker asks whether to mark
+  it failed (it only sees end-of-day balances, so it asks rather than deciding).
+- **Backup reminder**: a nudge to export a backup if you haven't in a week.
+
 ## Getting your trades in
 
 As far as I know, The Trading Pit doesn't offer a public API for futures accounts, so trades come in via CSV export

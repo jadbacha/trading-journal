@@ -14,6 +14,8 @@ interface Props {
   currency: string
   flags?: Map<string, DayFlag[]>
   onSelect: (date: string) => void
+  /** Opens the weekly review for the week starting on this Monday. */
+  onWeek?: (monday: string) => void
 }
 
 /** Short form for narrow cells: +470, −1.2k. */
@@ -25,7 +27,7 @@ function compact(n: number): string {
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-export function Calendar({ year, month, days, notes, selected, today, currency, flags, onSelect }: Props) {
+export function Calendar({ year, month, days, notes, selected, today, currency, flags, onSelect, onWeek }: Props) {
   // Weeks start on Monday; pad the grid with the trailing/leading days of nearby months.
   const first = new Date(year, month, 1)
   const offset = (first.getDay() + 6) % 7
@@ -112,9 +114,14 @@ export function Calendar({ year, month, days, notes, selected, today, currency, 
                 </button>
               )
             })}
-            <div className={`cal-week ${weekHasTrades ? (weekPnl > 0 ? 'pos' : weekPnl < 0 ? 'neg' : '') : ''}`}>
+            <button
+              className={`cal-week ${weekHasTrades ? (weekPnl > 0 ? 'pos' : weekPnl < 0 ? 'neg' : '') : ''}`}
+              onClick={() => onWeek?.(isoDay(week[0]))}
+              title="Weekly review"
+              aria-label={`Weekly review for the week of ${week[0].toDateString()}`}
+            >
               {weekHasTrades ? formatMoney(Math.round(weekPnl * 100) / 100, currency, true) : '—'}
-            </div>
+            </button>
           </div>
         )
       })}

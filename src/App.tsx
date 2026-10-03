@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { formatDay, withStatus } from './accounts'
+import { formatDay, nextPhase, withStatus } from './accounts'
 import { applyAutoPass } from './autopass'
+import { backupDue, exportBackup } from './backup'
+import { EdgeStats } from './components/EdgeStats'
+import { WeeklyReview } from './components/WeeklyReview'
+import { addDays, disciplineStreak, weekStart } from './review'
 import type { DayFlag } from './challenge'
 import { challengeStatus } from './challenge'
 import { AccountsDialog } from './components/AccountsDialog'
@@ -43,7 +47,8 @@ export default function App() {
   )
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() })
   const [selected, setSelected] = useState<string | null>(null)
-  const [dialog, setDialog] = useState<'import' | 'settings' | 'accounts' | null>(null)
+  const [dialog, setDialog] = useState<'import' | 'settings' | 'accounts' | 'review' | null>(null)
+  const [reviewWeek, setReviewWeek] = useState('')
   const [openAccount, setOpenAccount] = useState<string | null>(null)
   const [perfScope, setPerfScope] = useState<'month' | 'all'>('month')
   const [editingBe, setEditingBe] = useState(false)
@@ -108,6 +113,16 @@ export default function App() {
     [scopedTrades, settings.commissionPerContract],
   )
   const tradingDays = period.green + period.red + period.gray
+  const streak = useMemo(() => disciplineStreak(days.keys(), data.notes), [days, data.notes])
+  const backup = backupDue(data, now.getTime())
+  const openReview = (monday: string) => {
+    setReviewWeek(monday)
+    setDialog('review')
+  }
+  const backUpNow = async () => {
+    await exportBackup(data)
+    setData((d) => ({ ...d, settings: { ...d.settings, lastBackupAt: new Date().toISOString(), backupSnoozeUntil: undefined } }))
+  }
   // Like the trade win rate, breakeven days count as neither a win nor a loss.
   const dayWinRate = period.green + period.red ? period.green / (period.green + period.red) : null
   const importedKeys = useMemo(() => new Set(data.trades.map(importKey)), [data.trades])
@@ -145,6 +160,9 @@ export default function App() {
           <button className="ghost" onClick={() => manage(null)}>
             Accounts
           </button>
+          <button className="ghost" onClick={() => openReview(weekStart(today))}>
+            Weekly review
+          </button>
           <button onClick={() => setDialog('import')}>Import trades</button>
           <button className="ghost" onClick={() => setDialog('settings')}>
             Settings
@@ -152,6 +170,27 @@ export default function App() {
         </div>
       </header>
 
+      {backup.due && (
+        <div className="notice backup-notice" role="status">
+          <span>
+            💾 Your journal is stored only in this browser.{' '}
+            {backup.daysSince === null ? "You haven't exported a backup yet." : `Last backup ${backup.daysSince} days ago.`}
+          </span>
+          <span className="notice-actions">
+            <button className="small" onClick={backUpNow}>
+              Export backup
+            </button>
+            <button
+              className="link"
+              onClick={() =>
+                setData((d) => ({ ...d, settings: { ...d.settings, backupSnoozeUntil: new Date(Date.now() + 3 * 86_400_000).toISOString() } }))
+              }
+            >
+              Later
+            </button>
+          </span>
+        </div>
+      )}
       {accounts
         .filter((a) => a.passNotice)
         .map((a) => (
@@ -184,6 +223,12 @@ export default function App() {
               currency={settings.currency}
               onEdit={() => manage(account.id)}
               onAccount={updateAccount}
+              hasNextPhase={accounts.some((a) => a.previousId === account.id)}
+              onNextPhase={(phase) => {
+                const next = nextPhase(account, phase, today)
+                setData((d) => ({ ...d, accounts: [...d.accounts, next] }))
+                setView(next.id)
+              }}
             />
           ) : (
             <PortfolioCard
@@ -218,7 +263,7 @@ export default function App() {
               ))}
             </div>
           </div>
-          <div className="stats">
+          <div className="stats perf-stats">
             <div className="stat">
               <span className="stat-label">{perfScope === 'month' ? 'Month P&L' : 'Total profit'}</span>
               <span className={`stat-value ${period.pnl > 0 ? 'pos' : period.pnl < 0 ? 'neg' : ''}`}>
@@ -267,6 +312,13 @@ export default function App() {
                 <span className="neg">{formatMoney(period.worstDay, settings.currency, true)}</span>
               </span>
             </div>
+            <div className="stat">
+              <span className="stat-label">Discipline streak</span>
+              <span className="stat-value">🔥 {streak.current}</span>
+              <span className="meter-detail">
+                best {streak.best} · days with a plan and 4★+
+              </span>
+            </div>
           </div>
 
           <Performance
@@ -276,6 +328,7 @@ export default function App() {
             monthName={monthName}
             currency={settings.currency}
           />
+          <EdgeStats trades={scopedTrades} commission={settings.commissionPerContract} breakeven={settings.breakeven} currency={settings.currency} />
 
           <Calendar
             year={cursor.year}
@@ -287,6 +340,7 @@ export default function App() {
             currency={settings.currency}
             flags={flags}
             onSelect={setSelected}
+            onWeek={openReview}
           />
 
           {viewTrades.length === 0 && (
@@ -313,6 +367,7 @@ export default function App() {
             commission={settings.commissionPerContract}
             flags={flags?.get(selected)}
             mistakeTags={settings.mistakeTags}
+            focus={data.weeks[addDays(weekStart(selected), -7)]?.fix?.trim() || undefined}
             accounts={accounts}
             accountId={account?.id ?? null}
             onClose={() => setSelected(null)}
@@ -372,6 +427,25 @@ export default function App() {
           onDelete={(id) =>
             setData((d) => ({ ...d, accounts: d.accounts.filter((a) => a.id !== id), trades: d.trades.filter((t) => t.accountId !== id) }))
           }
+        />
+      )}
+      {dialog === 'review' && (
+        <WeeklyReview
+          initialWeek={reviewWeek}
+          days={days}
+          trades={viewTrades}
+          notes={data.notes}
+          weeks={data.weeks}
+          streak={streak}
+          settings={settings}
+          scopeLabel={account ? account.name : 'All accounts'}
+          onWeekNote={(start, note) => setData((d) => ({ ...d, weeks: { ...d.weeks, [start]: note } }))}
+          onOpenDay={(date) => {
+            setDialog(null)
+            setSelected(date)
+            setCursor({ year: +date.slice(0, 4), month: +date.slice(5, 7) - 1 })
+          }}
+          onClose={() => setDialog(null)}
         />
       )}
       {dialog === 'settings' && (

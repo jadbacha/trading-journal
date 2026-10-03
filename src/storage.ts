@@ -10,6 +10,7 @@ export const emptyData = (): JournalData => ({
   accounts: [defaultAccount()],
   trades: [],
   notes: {},
+  weeks: {},
   settings: {
     breakeven: { low: 0, high: 0 },
     currency: 'USD',
@@ -58,7 +59,12 @@ export function normalize(value: unknown): JournalData {
       ? v.accounts.map((a) => {
           // Accounts saved before the objective toggles existed: hide them if the eval is already over.
           const evalOnly = a.status !== 'passed' && a.status !== 'funded'
-          const fresh = defaultAccount({ showProfitTarget: evalOnly, showConsistency: evalOnly, showTradingDays: evalOnly })
+          const fresh = defaultAccount({
+            showProfitTarget: evalOnly,
+            showConsistency: evalOnly,
+            showTradingDays: evalOnly,
+            phase: a.status === 'funded' ? 'Funded' : 'Phase 1',
+          })
           return { ...fresh, ...a, rules: { ...fresh.rules, ...a.rules }, payouts: Array.isArray(a.payouts) ? a.payouts : [] }
         })
       : [defaultAccount({ rules: { ...defaultRules(), ...legacyRules } })]
@@ -70,6 +76,7 @@ export function normalize(value: unknown): JournalData {
       .filter((t): t is Trade => !!t && typeof t.date === 'string' && typeof t.pnl === 'number')
       .map((t) => (known.has(t.accountId) ? t : { ...t, accountId: accounts[0].id })),
     notes: v.notes && typeof v.notes === 'object' ? v.notes : {},
+    weeks: v.weeks && typeof v.weeks === 'object' ? v.weeks : {},
     settings: { ...base.settings, ...settings },
   }
 }

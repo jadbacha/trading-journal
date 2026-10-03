@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { Account } from '../accounts'
-import { daysInclusive, formatDay, payoutTotal, STATUS_LABEL, withStatus } from '../accounts'
+import { daysInclusive, followingPhase, formatDay, payoutTotal, STATUS_LABEL, withStatus } from '../accounts'
 import type { ChallengeStatus } from '../challenge'
 import { formatRemaining, NEAR_LIMIT, parseDuration, toLocalInput } from '../challenge'
 import { formatMoney, isoDay } from '../stats'
+import { EquityChart } from './EquityChart'
 
 interface Props {
   account: Account
@@ -12,6 +13,9 @@ interface Props {
   /** Opens this account in the Accounts dialog. */
   onEdit: () => void
   onAccount: (account: Account) => void
+  /** Set when this account already has a next phase, so the button is not offered twice. */
+  hasNextPhase: boolean
+  onNextPhase: (phase: string) => void
 }
 
 type Tone = 'good' | 'warn' | 'bad' | 'neutral'
@@ -122,7 +126,7 @@ function Countdown({ endsAt, done, onChange }: { endsAt: string; done: boolean; 
   )
 }
 
-export function ChallengeCard({ account, status: s, currency, onEdit, onAccount }: Props) {
+export function ChallengeCard({ account, status: s, currency, onEdit, onAccount, hasNextPhase, onNextPhase }: Props) {
   const rules = account.rules
   const [today] = useState(() => isoDay(new Date()))
   const inEval = account.status === 'evaluation'
@@ -152,6 +156,7 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
         <div>
           <h2>
             {account.name || 'Untitled'} <span className={`badge status-${account.status}`}>{STATUS_LABEL[account.status]}</span>
+            {!account.name.toLowerCase().includes(account.phase.toLowerCase()) && <span className="badge phase">{account.phase}</span>}
           </h2>
           <span className="challenge-balance">
             Balance <strong>{money(s.balance)}</strong>
@@ -198,11 +203,33 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
               </button>
             </>
           )}
+          {account.status === 'passed' && !hasNextPhase && (
+            <button className="small" onClick={() => onNextPhase(followingPhase(account.phase))}>
+              Start {followingPhase(account.phase)} →
+            </button>
+          )}
           <button className="ghost small" onClick={onEdit}>
             Edit account
           </button>
         </div>
       </header>
+
+      {s.breachedOn && !account.breachDismissed && (account.status === 'evaluation' || account.status === 'funded') && (
+        <div className="breach-warning" role="alert">
+          <span>
+            ⛔ The balance closed at {money(s.series.find((p) => p.date === s.breachedOn)?.balance ?? s.balance)} on{' '}
+            {formatDay(s.breachedOn)}, at or below the drawdown floor. Did the account fail?
+          </span>
+          <span className="notice-actions">
+            <button className="small danger" onClick={() => onAccount({ ...withStatus(account, 'failed', s.breachedOn!), breachDismissed: true })}>
+              Mark failed
+            </button>
+            <button className="ghost small" onClick={() => onAccount({ ...account, breachDismissed: true })}>
+              No, still active
+            </button>
+          </span>
+        </div>
+      )}
 
       {rules.enabled && inEval && s.missing.length > 0 && (
         <p className={`still-needed ${s.profit >= rules.profitTarget ? 'target-hit' : ''}`}>
@@ -268,6 +295,16 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
         )}
       </div>
       )}
+
+      <details className="equity-wrap" open>
+        <summary>Equity curve</summary>
+        <EquityChart
+          series={s.series}
+          startBalance={rules.startBalance}
+          target={rules.enabled && inEval && account.showProfitTarget ? rules.startBalance + rules.profitTarget : null}
+          currency={currency}
+        />
+      </details>
     </section>
   )
 }

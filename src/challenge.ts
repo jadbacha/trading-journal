@@ -87,6 +87,10 @@ export interface ChallengeStatus {
   passedOn: string | null
   /** What is still needed to pass, in words; empty once passed. */
   missing: string[]
+  /** First day the end-of-day balance closed at or below the floor, YYYY-MM-DD. */
+  breachedOn: string | null
+  /** End-of-day balance and the floor in force that day, for the equity curve. */
+  series: { date: string; balance: number; floor: number }[]
   flags: Map<string, DayFlag[]>
 }
 
@@ -102,12 +106,18 @@ export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRule
   let drawdownBreached = false
   let bestDay = 0
   let passedOn: string | null = null
+  let breachedOn: string | null = null
+  const series: ChallengeStatus['series'] = []
   const flags = new Map<string, DayFlag[]>()
 
   for (const [i, d] of counted.entries()) {
     balance += d.pnl
     // Only end-of-day balances are known from the trade history, so intraday breaches can't be seen here.
-    if (balance <= floor) drawdownBreached = true
+    if (balance <= floor) {
+      drawdownBreached = true
+      breachedOn ??= d.date
+    }
+    series.push({ date: d.date, balance: round(balance), floor: round(floor) })
     if (rules.trailing) {
       floor = Math.max(floor, balance - rules.maxDrawdown)
       // e.g. $50K account, $2K drawdown: from a $52K balance on, the floor stays at $50K.
@@ -149,9 +159,11 @@ export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRule
     todayPnl: counted.find((d) => d.date === today)?.pnl ?? 0,
     floor: round(floor),
     drawdownBreached,
-      passed: passedOn !== null,
+    passed: passedOn !== null,
     passedOn,
     missing,
+    breachedOn,
+    series,
     flags,
   }
 }

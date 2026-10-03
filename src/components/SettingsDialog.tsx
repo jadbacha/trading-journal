@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { JournalData, Settings } from '../types'
-import { blobToDataUrl, clearImages, dataUrlToBlob, getImage, putImage } from '../images'
+import { exportBackup } from '../backup'
+import { clearImages, dataUrlToBlob, putImage } from '../images'
 import { DEFAULT_MISTAKES } from '../mistakes'
 import { normalize } from '../storage'
 import { BreakevenFields } from './BreakevenFields'
@@ -24,22 +25,12 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
     setTagsText((tags.length ? tags : DEFAULT_MISTAKES).join(', '))
   }
 
-  const exportBackup = async () => {
+  const backUp = async () => {
     setBusy(true)
-    // Screenshots live outside the journal data, so embed them to make the backup complete.
-    const images: Record<string, string> = {}
-    for (const id of Object.values(data.notes).flatMap((n) => [...(n.planImages ?? []), ...(n.images ?? [])])) {
-      const img = await getImage(id).catch(() => undefined)
-      if (img) images[id] = await blobToDataUrl(img)
-    }
+    await exportBackup(data)
     setBusy(false)
-    const blob = new Blob([JSON.stringify({ ...data, images })], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `trading-journal-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    onSettings({ ...settings, lastBackupAt: new Date().toISOString(), backupSnoozeUntil: undefined })
+    setMessage('Backup downloaded.')
   }
 
   const restore = async (file: File) => {
@@ -113,9 +104,10 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
         <h3>Your data</h3>
         <p className="muted">
           Everything is stored in this browser only. Export a backup now and then, or to move to another device.
+          {settings.lastBackupAt ? ` Last backup: ${new Date(settings.lastBackupAt).toLocaleDateString()}.` : ' No backup yet.'}
         </p>
         <div className="row-buttons">
-          <button onClick={exportBackup} disabled={busy}>
+          <button onClick={backUp} disabled={busy}>
             {busy ? 'Working…' : 'Export backup'}
           </button>
           <label className="button ghost">

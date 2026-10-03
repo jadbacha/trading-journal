@@ -25,6 +25,10 @@ export interface Account {
   /** YYYY-MM-DD, or '' if not recorded. */
   purchasedAt: string
   status: AccountStatus
+  /** Stage of the challenge, e.g. "Phase 1", "Phase 2", "Funded". */
+  phase: string
+  /** The account this one continues from (the previous phase), if any. */
+  previousId?: string
   /** Day the evaluation ended (passed or failed), YYYY-MM-DD, or ''. The start is rules.startDate. */
   evalEnd: string
   rules: ChallengeRules
@@ -39,6 +43,8 @@ export interface Account {
   autoPass: boolean
   /** Set when auto-pass switched the account; cleared once the announcement is dismissed. */
   passNotice?: boolean
+  /** The drawdown-breach warning was dismissed. */
+  breachDismissed?: boolean
   payouts: Payout[]
 }
 
@@ -50,6 +56,7 @@ export const defaultAccount = (patch: Partial<Account> = {}): Account => ({
   cost: 0,
   purchasedAt: '',
   status: 'evaluation',
+  phase: 'Phase 1',
   evalEnd: '',
   rules: defaultRules(),
   showStart: true,
@@ -77,6 +84,28 @@ export function withStatus(a: Account, status: AccountStatus, today: string): Ac
     evalEnd: finished ? a.evalEnd || today : '',
     ...(evalOnly === null ? {} : { showProfitTarget: evalOnly, showConsistency: evalOnly, showTradingDays: evalOnly }),
   }
+}
+
+export const PHASES = ['Phase 1', 'Phase 2', 'Funded']
+
+/** The phase after this one: Phase 1 → Phase 2 → Funded. */
+export const followingPhase = (phase: string) => PHASES[Math.min(PHASES.indexOf(phase) + 1, PHASES.length - 1)] || 'Funded'
+
+/**
+ * Starts the next phase of a passed account as a new account. It keeps the rules (to adjust
+ * for the new phase), costs nothing since the purchase sits on the first account, and starts
+ * today. A funded account goes straight to the funded status.
+ */
+export function nextPhase(prev: Account, phase: string, today: string): Account {
+  const base = prev.name.replace(/\s*·\s*(Phase \d+|Funded)$/i, '')
+  const account = defaultAccount({
+    name: `${base} · ${phase}`,
+    phase,
+    previousId: prev.id,
+    purchasedAt: '',
+    rules: { ...prev.rules, startDate: today, endsAt: '' },
+  })
+  return phase === 'Funded' ? { ...withStatus(account, 'funded', today), evalEnd: '' } : account
 }
 
 const round = (n: number) => Math.round(n * 100) / 100

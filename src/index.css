@@ -122,7 +122,7 @@ textarea { resize: vertical; line-height: 1.5; }
   gap: 12px;
 }
 .topbar-actions { display: flex; gap: 8px; }
-main { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 
 .month-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
@@ -285,7 +285,7 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 
 /* Narrow screens */
 @media (max-width: 960px) {
-  main.with-panel { grid-template-columns: 1fr; }
+  main.with-panel { grid-template-columns: minmax(0, 1fr); }
   .panel { position: static; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }
@@ -568,3 +568,99 @@ select.needs-choice { border-color: var(--warn); }
 .notice-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .still-needed { margin: 0 0 12px; font-size: 0.85rem; color: var(--muted); }
 .still-needed.target-hit { color: var(--text); background: var(--profit-bg); border-radius: 8px; padding: 8px 10px; }
+
+/* Equity curve */
+.equity-wrap { margin-top: 14px; }
+.equity-wrap > summary { cursor: pointer; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.equity { position: relative; margin-top: 8px; overflow: hidden; min-width: 0; }
+.equity svg { display: block; touch-action: pan-y; }
+.empty-chart { color: var(--muted); font-size: 0.85rem; padding: 18px 0; }
+.eq-balance { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.eq-floor { fill: none; stroke: var(--loss); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.eq-target { stroke: var(--profit); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.eq-start { stroke: var(--border); stroke-width: 1; }
+.eq-cross { stroke: var(--muted); stroke-width: 1; }
+.eq-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.eq-label { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.eq-label.strong { fill: var(--text); font-weight: 600; }
+.eq-tip {
+  position: absolute;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  min-width: 150px;
+}
+
+/* Breach warning, phases, focus */
+.breach-warning {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--loss-bg);
+  border: 1px solid var(--loss-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 0.88rem;
+}
+.badge.phase { background: var(--surface-2); color: var(--muted); margin-left: 4px; }
+.focus-note { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; background: rgba(91, 141, 239, 0.12); font-size: 0.85rem; }
+.backup-notice { background: var(--surface); border-color: var(--border); }
+.notice { flex-wrap: wrap; }
+
+/* Calendar week totals open the review */
+button.cal-week { background: none; border: none; padding: 0 4px 0 0; justify-content: flex-end; border-radius: 6px; }
+button.cal-week:hover { background: var(--surface-2); }
+
+/* Edge */
+.edge { margin-top: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+.edge-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.edge-table th { text-align: left; font-weight: 500; color: var(--muted); font-size: 0.75rem; padding: 4px 6px; }
+.edge-table td { padding: 5px 6px; border-top: 1px solid var(--border); }
+.edge-bar-col { width: 45%; }
+.edge-cell { display: flex; align-items: center; gap: 8px; }
+.edge-bar { position: relative; flex: 1; height: 10px; }
+.edge-zero { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--border); }
+.edge-fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.pos-bg { background: var(--profit); }
+.neg-bg { background: var(--loss); }
+.edge-value { min-width: 84px; text-align: right; }
+.small-note { font-size: 0.75rem; margin: 6px 0 0; }
+
+/* Weekly review */
+.week-nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.week-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.week-day.day-profit { background: var(--profit-bg); border-color: var(--profit-border); }
+.week-day.day-loss { background: var(--loss-bg); border-color: var(--loss-border); }
+.week-day.day-breakeven { background: var(--be-bg); border-color: var(--be-border); }
+.week-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.week-notes label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+@media (max-width: 640px) {
+  .week-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .week-notes { grid-template-columns: 1fr; }
+  .edge-value { min-width: 70px; font-size: 0.78rem; }
+}

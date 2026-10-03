@@ -27,6 +27,8 @@ interface Props {
   onTradeMistakes: (id: string, mistakes: string[]) => void
   onDeleteTrade: (id: string) => void
   onClose: () => void
+  /** The "one thing to fix" from last week's review. */
+  focus?: string
 }
 
 /** Which box a screenshot belongs to: the plan's or the review's. */
@@ -53,6 +55,7 @@ export function DayPanel({
   onTradeMistakes,
   onDeleteTrade,
   onClose,
+  focus,
 }: Props) {
   const [pnl, setPnl] = useState('')
   const [symbol, setSymbol] = useState('')
@@ -147,6 +150,12 @@ export function DayPanel({
           ×
         </button>
       </header>
+
+      {focus && (
+        <p className="focus-note">
+          🎯 This week's focus: <strong>{focus}</strong>
+        </p>
+      )}
 
       <section className="journal-box" onPaste={plan.onPaste}>
         <h3>Pre-market plan</h3>

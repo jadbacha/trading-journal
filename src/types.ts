@@ -40,13 +40,26 @@ export interface Settings {
   commissionPerContract: number
   /** Options offered when tagging a trade's mistakes. */
   mistakeTags: string[]
+  /** When a backup was last exported, ISO timestamp. */
+  lastBackupAt?: string
+  /** Backup reminder hidden until this ISO timestamp. */
+  backupSnoozeUntil?: string
 }
 
 export interface JournalData {
   accounts: Account[]
   trades: Trade[]
   notes: Record<string, DayNote>
+  /** Weekly reviews, keyed by the week's Monday (YYYY-MM-DD). */
+  weeks: Record<string, WeekNote>
   settings: Settings
+}
+
+export interface WeekNote {
+  /** What went well this week. */
+  good: string
+  /** The one thing to fix next week; shown on next week's days. */
+  fix: string
 }
 
 /** P&L from `low` to `high` (inclusive) counts as breakeven, e.g. −20 to +15. */

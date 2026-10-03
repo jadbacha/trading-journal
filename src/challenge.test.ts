@@ -141,3 +141,15 @@ describe('passing', () => {
     expect(s.missing[0]).toBe('max drawdown was breached')
   })
 })
+
+describe('equity series and breach date', () => {
+  it('records each day with the floor in force that day, and the first breach', () => {
+    const s = challengeStatus([day('2026-10-01', 500), day('2026-10-02', -2600), day('2026-10-05', -100)], defaultRules(), '')
+    expect(s.series).toEqual([
+      { date: '2026-10-01', balance: 50500, floor: 48000 },
+      { date: '2026-10-02', balance: 47900, floor: 48500 },
+      { date: '2026-10-05', balance: 47800, floor: 48500 },
+    ])
+    expect(s.breachedOn).toBe('2026-10-02')
+  })
+})

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Account, AccountStatus } from '../accounts'
-import { daysInclusive, defaultAccount, formatDay, newId, payoutTotal, STATUS_LABEL, withStatus } from '../accounts'
+import { daysInclusive, defaultAccount, formatDay, newId, payoutTotal, PHASES, STATUS_LABEL, withStatus } from '../accounts'
 import type { ChallengeRules } from '../challenge'
 import { formatRemaining, parseDuration, toLocalInput } from '../challenge'
 import { parseMoney } from '../csv'
@@ -70,6 +70,7 @@ export function AccountsDialog({ accounts, tradingPnl, tradeCounts, currency, in
                     <span className="account-name">
                       <strong>{a.name || 'Untitled'}</strong>
                       <span className={`badge status-${a.status}`}>{STATUS_LABEL[a.status]}</span>
+                      {!a.name.toLowerCase().includes(a.phase.toLowerCase()) && <span className="badge phase">{a.phase}</span>}
                     </span>
                     <span className="account-figures">
                       <span>
@@ -158,6 +159,14 @@ function AccountEditor({
               <option key={s} value={s}>
                 {STATUS_LABEL[s]}
               </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Phase</span>
+          <select value={a.phase} onChange={(e) => set({ phase: e.target.value })}>
+            {[...new Set([...PHASES, a.phase])].map((p) => (
+              <option key={p}>{p}</option>
             ))}
           </select>
         </label>
