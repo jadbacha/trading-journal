@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ChallengeRules, ChallengeStatus } from '../challenge'
-import { formatRemaining, NEAR_LIMIT } from '../challenge'
+import { formatRemaining, NEAR_LIMIT, parseDuration, toLocalInput } from '../challenge'
 import { formatMoney } from '../stats'
 
 interface Props {
@@ -8,6 +8,8 @@ interface Props {
   status: ChallengeStatus
   currency: string
   onEdit: () => void
+  /** Sets the deadline as an ISO timestamp, or '' to remove it. */
+  onDeadline: (endsAt: string) => void
 }
 
 type Tone = 'good' | 'warn' | 'bad' | 'neutral'
@@ -28,15 +30,73 @@ function Meter({ label, value, detail, ratio, tone }: { label: string; value: st
   )
 }
 
-/** Live countdown to the challenge deadline, refreshed every 15 seconds. */
-function Countdown({ endsAt, done }: { endsAt: string; done: boolean }) {
+/** Inline editor: paste the time left from the dashboard, or pick the exact end. */
+function DeadlineEditor({ endsAt, onSave, onCancel }: { endsAt: string; onSave: (iso: string) => void; onCancel: () => void }) {
+  const [left, setLeft] = useState('')
+  const [at, setAt] = useState(() => toLocalInput(endsAt))
+  const [error, setError] = useState('')
+  const save = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (left.trim()) {
+      const ms = parseDuration(left)
+      if (ms === null) return setError('Use a format like 15d 12h 26m')
+      return onSave(new Date(Date.now() + ms).toISOString())
+    }
+    if (!at) return setError('Enter the time left or pick a date')
+    onSave(new Date(at).toISOString())
+  }
+  return (
+    <form className="countdown deadline-edit" onSubmit={save}>
+      <span className="stat-label">{endsAt ? 'Edit deadline' : 'Add deadline'}</span>
+      <input placeholder="Time left, e.g. 15d 12h 26m" value={left} onChange={(e) => setLeft(e.target.value)} aria-label="Time left" autoFocus />
+      <input type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} disabled={!!left.trim()} aria-label="Ends at" />
+      {error && <span className="error">{error}</span>}
+      <div className="inline-field">
+        <button type="button" className="ghost small" onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="submit" className="small">
+          Save
+        </button>
+      </div>
+    </form>
+  )
+}
+
+/** Live countdown to the challenge deadline, refreshed every 15 seconds, with edit and remove. */
+function Countdown({ endsAt, done, onChange }: { endsAt: string; done: boolean; onChange: (iso: string) => void }) {
   const [now, setNow] = useState(() => Date.now())
+  const [editing, setEditing] = useState(false)
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 15_000)
     return () => clearInterval(id)
   }, [])
+
+  if (editing) {
+    return (
+      <DeadlineEditor
+        endsAt={endsAt}
+        onCancel={() => setEditing(false)}
+        onSave={(iso) => {
+          onChange(iso)
+          setNow(Date.now())
+          setEditing(false)
+        }}
+      />
+    )
+  }
+
   const end = Date.parse(endsAt)
-  if (Number.isNaN(end)) return null
+  if (!endsAt || Number.isNaN(end)) {
+    return (
+      <div className="countdown">
+        <button className="ghost small" onClick={() => setEditing(true)}>
+          + Add deadline
+        </button>
+      </div>
+    )
+  }
+
   const left = end - now
   const deadline = new Date(end).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
   const tone = left <= 0 ? (done ? 'neutral' : 'bad') : left < 3 * 86_400_000 ? 'warn' : 'neutral'
@@ -45,11 +105,22 @@ function Countdown({ endsAt, done }: { endsAt: string; done: boolean }) {
       <span className="stat-label">Remaining time</span>
       <strong className={`countdown-value tone-${tone}`}>{left > 0 ? formatRemaining(left) : "Time's up"}</strong>
       <span className="meter-detail">ends {deadline}</span>
+      <span className="deadline-actions">
+        <button className="link" onClick={() => setEditing(true)}>
+          Edit
+        </button>
+        <button
+          className="link danger-link"
+          onClick={() => confirm('Remove the challenge deadline?') && onChange('')}
+        >
+          Remove
+        </button>
+      </span>
     </div>
   )
 }
 
-export function ChallengeCard({ rules, status: s, currency, onEdit }: Props) {
+export function ChallengeCard({ rules, status: s, currency, onEdit, onDeadline }: Props) {
   const money = (n: number, signed = false) => formatMoney(n, currency, signed)
 
   const consistencyRatio = s.consistencyCap ? s.bestDay / s.consistencyCap : 0
@@ -75,7 +146,7 @@ export function ChallengeCard({ rules, status: s, currency, onEdit }: Props) {
             Balance <strong>{money(s.balance)}</strong>
           </span>
         </div>
-        {rules.endsAt && <Countdown endsAt={rules.endsAt} done={s.passed} />}
+        <Countdown endsAt={rules.endsAt} done={s.passed} onChange={onDeadline} />
         <div className="challenge-actions">
           <span className={`badge tone-bg-${badge.tone}`}>{badge.text}</span>
           <button className="ghost small" onClick={onEdit}>

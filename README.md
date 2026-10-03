@@ -8,7 +8,7 @@ A simple journal for a The Trading Pit futures account. Each day on the calendar
 
 A **challenge tracker** above the calendar follows your prop-firm objectives: profit target, consistency (best day
 vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, and trading
-days, plus a countdown to the challenge deadline. It's preset for The Trading Pit Futures Prime $50,000 challenge, and **Settings → Challenge** changes the rules.
+days, plus a countdown to the challenge deadline that you can edit or remove right on the card. It's preset for The Trading Pit Futures Prime $50,000 challenge, and **Settings → Challenge** changes the rules.
 Days that came within 80% of the daily loss limit get an orange ⚠, days that hit it get ⛔, and days over the
 consistency cap get ⚑.
 

@@ -436,3 +436,13 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 }
 .mistake-list li strong { text-align: right; }
 .stack { display: flex; flex-direction: column; gap: 6px; }
+
+.deadline-actions { display: flex; gap: 10px; justify-content: flex-end; font-size: 0.75rem; }
+.deadline-actions .link { font-size: 0.75rem; }
+.link.danger-link { color: var(--loss); }
+.deadline-edit { gap: 6px; min-width: 220px; }
+.deadline-edit input { padding: 6px 8px; font-size: 0.85rem; }
+.deadline-edit .inline-field { justify-content: flex-end; }
+@media (max-width: 640px) {
+  .deadline-actions, .deadline-edit .inline-field { justify-content: flex-start; }
+}

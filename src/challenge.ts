@@ -49,6 +49,14 @@ export function formatRemaining(ms: number): string {
   return d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
+/** ISO timestamp → value for a datetime-local input, in the viewer's timezone. */
+export function toLocalInput(iso: string): string {
+  const d = new Date(iso)
+  if (!iso || Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 /** Share of the daily loss limit at which a day is flagged as a close call. */
 export const NEAR_LIMIT = 0.8
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ChallengeRules } from '../challenge'
-import { formatRemaining, parseDuration } from '../challenge'
+import { formatRemaining, parseDuration, toLocalInput } from '../challenge'
 import type { JournalData, Settings } from '../types'
 import { blobToDataUrl, clearImages, dataUrlToBlob, getImage, putImage } from '../images'
 import { DEFAULT_MISTAKES } from '../mistakes'
@@ -11,14 +11,6 @@ interface Props {
   onSettings: (s: Settings) => void
   onReplace: (data: JournalData) => void
   onClose: () => void
-}
-
-/** ISO timestamp → value for a datetime-local input, in the viewer's timezone. */
-function toLocalInput(iso: string): string {
-  const d = new Date(iso)
-  if (!iso || Number.isNaN(d.getTime())) return ''
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) {
@@ -155,11 +147,18 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
             <div className="mapping deadline">
               <label>
                 <span>Challenge ends (your local time)</span>
-                <input
-                  type="datetime-local"
-                  value={toLocalInput(rules.endsAt)}
-                  onChange={(e) => setRules({ endsAt: e.target.value ? new Date(e.target.value).toISOString() : '' })}
-                />
+                <div className="inline-field">
+                  <input
+                    type="datetime-local"
+                    value={toLocalInput(rules.endsAt)}
+                    onChange={(e) => setRules({ endsAt: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                  />
+                  {rules.endsAt && (
+                    <button type="button" className="ghost" onClick={() => setRules({ endsAt: '' })}>
+                      Remove
+                    </button>
+                  )}
+                </div>
               </label>
               <form
                 onSubmit={(e) => {

@@ -81,6 +81,9 @@ export default function App() {
               status={challenge}
               currency={settings.currency}
               onEdit={() => setDialog('settings')}
+              onDeadline={(endsAt) =>
+                setData((d) => ({ ...d, settings: { ...d.settings, challenge: { ...d.settings.challenge, endsAt } } }))
+              }
             />
           )}
 
