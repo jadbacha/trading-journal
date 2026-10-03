@@ -28,7 +28,16 @@ export function Performance({ stats: s, mistakes, scope, monthName, currency, on
           ))}
         </div>
       </div>
-      <div className="stats">
+      <div className="stats perf-stats">
+        {scope === 'all' && (
+          <div className="stat">
+            <span className="stat-label">Total profit</span>
+            <span className={`stat-value ${s.totalPnl > 0 ? 'pos' : s.totalPnl < 0 ? 'neg' : ''}`}>
+              {formatMoney(s.totalPnl, currency, true)}
+            </span>
+            <span className="meter-detail">All trades, after commissions</span>
+          </div>
+        )}
         <div className="stat">
           <span className="stat-label">Win rate</span>
           <span className={`stat-value ${winTone}`}>{s.winRate === null ? '—' : `${Math.round(s.winRate * 100)}%`}</span>

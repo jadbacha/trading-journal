@@ -515,3 +515,11 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 
 .row-checks.sub { margin: 4px 0 0 22px; align-items: center; }
 .row-checks.sub .muted { flex-basis: 100%; font-size: 0.78rem; }
+
+.perf-stats { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.challenge-actions { flex-wrap: wrap; }
+.challenge-head > div { min-width: 0; }
+@media (max-width: 640px) {
+  .countdown { width: auto; flex-basis: 100%; }
+  .challenge { padding: 12px; }
+}

@@ -80,16 +80,20 @@ export interface TradeStats {
   winLossRatio: number | null
   /** Total won divided by total lost; Infinity with wins and no losses, null with neither. */
   profitFactor: number | null
+  /** Sum of every trade's P&L after commissions. */
+  totalPnl: number
 }
 
 /** Trade-level performance, using P&L after commissions. */
 export function tradeStats(trades: Trade[], commissionPerContract: number): TradeStats {
   let won = 0
+  let total = 0
   let lost = 0
   let wins = 0
   let losses = 0
   for (const t of trades) {
     const pnl = netPnl(t, commissionPerContract)
+    total += pnl
     if (pnl > 0) {
       wins++
       won += pnl
@@ -103,6 +107,7 @@ export function tradeStats(trades: Trade[], commissionPerContract: number): Trad
   const avgLoss = losses ? round(lost / losses) : 0
   return {
     trades: trades.length,
+    totalPnl: round(total),
     wins,
     losses,
     breakeven: trades.length - wins - losses,

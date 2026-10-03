@@ -128,7 +128,7 @@ describe('tradeStats', () => {
     // The 1.20 gross win nets to -0.10 after a $1.30 commission, so it counts as a loss.
     const trades = [t(300), t(100), t(-100), t(-50), t(0), t(1.2, { qty: 1, gross: true })]
     const s = tradeStats(trades, 1.3)
-    expect(s).toMatchObject({ trades: 6, wins: 2, losses: 3, breakeven: 1, avgWin: 200, avgLoss: 50.03 })
+    expect(s).toMatchObject({ trades: 6, wins: 2, losses: 3, breakeven: 1, avgWin: 200, avgLoss: 50.03, totalPnl: 249.9 })
     expect(s.winRate).toBeCloseTo(0.4)
     expect(s.profitFactor).toBeCloseTo(400 / 150.1)
     expect(s.winLossRatio).toBeCloseTo(200 / 50.03)
@@ -136,6 +136,6 @@ describe('tradeStats', () => {
 
   it('handles one-sided and empty histories', () => {
     expect(tradeStats([t(50)], 0)).toMatchObject({ winRate: 1, profitFactor: Infinity, winLossRatio: null })
-    expect(tradeStats([], 0)).toMatchObject({ trades: 0, winRate: null, profitFactor: null })
+    expect(tradeStats([], 0)).toMatchObject({ trades: 0, winRate: null, profitFactor: null, totalPnl: 0 })
   })
 })
