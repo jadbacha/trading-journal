@@ -90,9 +90,9 @@ describe('day colouring', () => {
   it('nets all trades on a day before colouring', () => {
     const days = summarizeDays(
       [
-        { id: 'a', date: '2026-10-01', pnl: 100, source: 'manual' },
-        { id: 'b', date: '2026-10-01', pnl: -100, source: 'manual' },
-        { id: 'c', date: '2026-10-02', pnl: -30, source: 'manual' },
+        { id: 'a', accountId: 'acc', date: '2026-10-01', pnl: 100, source: 'manual' },
+        { id: 'b', accountId: 'acc', date: '2026-10-01', pnl: -100, source: 'manual' },
+        { id: 'c', accountId: 'acc', date: '2026-10-02', pnl: -30, source: 'manual' },
       ],
       { breakevenThreshold: 0, commissionPerContract: 0 },
     )
@@ -102,9 +102,9 @@ describe('day colouring', () => {
 
   it('subtracts commission per contract from gross trades only', () => {
     const trades = [
-      { id: 'a', date: '2026-10-01', pnl: 474, qty: 3, gross: true, source: 'import' as const },
-      { id: 'b', date: '2026-10-01', pnl: -20, source: 'manual' as const },
-      { id: 'c', date: '2026-10-02', pnl: 4, qty: 2, gross: true, source: 'import' as const },
+      { id: 'a', accountId: 'acc', date: '2026-10-01', pnl: 474, qty: 3, gross: true, source: 'import' as const },
+      { id: 'b', accountId: 'acc', date: '2026-10-01', pnl: -20, source: 'manual' as const },
+      { id: 'c', accountId: 'acc', date: '2026-10-02', pnl: 4, qty: 2, gross: true, source: 'import' as const },
     ]
     const days = summarizeDays(trades, { breakevenThreshold: 0, commissionPerContract: 2.5 })
     expect(days.get('2026-10-01')).toMatchObject({ pnl: 446.5, fees: 7.5, result: 'profit' })
@@ -122,7 +122,7 @@ describe('day colouring', () => {
 })
 
 describe('tradeStats', () => {
-  const t = (pnl: number, extra: object = {}) => ({ id: String(Math.random()), date: '2026-10-01', pnl, source: 'manual' as const, ...extra })
+  const t = (pnl: number, extra: object = {}) => ({ id: String(Math.random()), accountId: 'acc', date: '2026-10-01', pnl, source: 'manual' as const, ...extra })
 
   it('computes win rate, averages and profit factor after commissions', () => {
     // The 1.20 gross win nets to -0.10 after a $1.30 commission, so it counts as a loss.

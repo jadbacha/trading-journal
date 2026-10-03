@@ -365,7 +365,7 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 
 /* Performance */
 .perf { margin-bottom: 16px; }
-.perf-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.perf-head { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; margin-bottom: 8px; flex-wrap: wrap; }
 .perf-head h3 { margin: 0; }
 .perf .stats { margin-bottom: 0; }
 .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -445,4 +445,70 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 .deadline-edit .inline-field { justify-content: flex-end; }
 @media (max-width: 640px) {
   .deadline-actions, .deadline-edit .inline-field { justify-content: flex-start; }
+}
+
+/* Accounts */
+.account-picker { width: auto; max-width: 220px; padding: 7px 10px; }
+.modal.wide { max-width: 760px; }
+.link.back { font-size: 1rem; text-decoration: none; }
+.badge.status-evaluation { background: var(--be-bg); color: var(--text); }
+.badge.status-passed { background: var(--profit-bg); color: var(--profit); }
+.badge.status-funded { background: rgba(91, 141, 239, 0.18); color: var(--accent); }
+.badge.status-failed { background: var(--loss-bg); color: var(--loss); }
+.challenge-head h2 .badge { vertical-align: middle; margin-left: 4px; }
+.challenge-dates { display: block; font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+.pass-btn { color: var(--profit); border-color: var(--profit-border); }
+.fail-btn { color: var(--loss); border-color: var(--loss-border); }
+
+.portfolio { margin: 4px 0 12px; }
+.account-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.account-list.compact { margin-top: 0; }
+.account-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: left;
+}
+.account-row:hover { border-color: var(--muted); }
+.account-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.account-figures { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+.account-editor h3:first-child { margin-top: 12px; }
+.account-editor > .muted { margin: 8px 0 0; }
+.row-checks { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.row-checks .check { margin-top: 0; }
+.payout-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.payout-list li {
+  display: grid;
+  grid-template-columns: 1fr auto 30px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.payout-list li.payout-total { border-bottom: none; font-weight: 600; }
+.add-payout { display: grid; grid-template-columns: 160px 1fr auto; gap: 6px; }
+.modal-foot.spread { justify-content: space-between; border-top: 1px solid var(--border); padding-top: 16px; }
+
+.trade-account { color: var(--accent); }
+.add-to { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.add-to select { width: auto; flex: 1; }
+.import-account { margin-bottom: 12px; }
+
+@media (max-width: 640px) {
+  .topbar { flex-wrap: wrap; }
+  .topbar-actions { flex-wrap: wrap; width: 100%; }
+  .account-picker { flex: 1; max-width: none; }
+  .add-payout { grid-template-columns: 1fr 1fr; }
+  .add-payout button { grid-column: span 2; }
 }

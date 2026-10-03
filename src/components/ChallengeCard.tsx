@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
-import type { ChallengeRules, ChallengeStatus } from '../challenge'
+import type { Account } from '../accounts'
+import { daysInclusive, formatDay, payoutTotal, STATUS_LABEL } from '../accounts'
+import type { ChallengeStatus } from '../challenge'
 import { formatRemaining, NEAR_LIMIT, parseDuration, toLocalInput } from '../challenge'
-import { formatMoney } from '../stats'
+import { formatMoney, isoDay } from '../stats'
 
 interface Props {
-  rules: ChallengeRules
+  account: Account
   status: ChallengeStatus
   currency: string
+  /** Opens this account in the Accounts dialog. */
   onEdit: () => void
-  /** Sets the deadline as an ISO timestamp, or '' to remove it. */
-  onDeadline: (endsAt: string) => void
+  onAccount: (account: Account) => void
 }
 
 type Tone = 'good' | 'warn' | 'bad' | 'neutral'
@@ -120,7 +122,14 @@ function Countdown({ endsAt, done, onChange }: { endsAt: string; done: boolean; 
   )
 }
 
-export function ChallengeCard({ rules, status: s, currency, onEdit, onDeadline }: Props) {
+export function ChallengeCard({ account, status: s, currency, onEdit, onAccount }: Props) {
+  const rules = account.rules
+  const [today] = useState(() => isoDay(new Date()))
+  const inEval = account.status === 'evaluation'
+  const evalDays = rules.startDate ? daysInclusive(rules.startDate, account.evalEnd || today) : null
+  const finish = (status: 'passed' | 'failed') => {
+    if (confirm(`Mark "${account.name}" as ${status} today?`)) onAccount({ ...account, status, evalEnd: account.evalEnd || today })
+  }
   const money = (n: number, signed = false) => formatMoney(n, currency, signed)
 
   const consistencyRatio = s.consistencyCap ? s.bestDay / s.consistencyCap : 0
@@ -140,21 +149,60 @@ export function ChallengeCard({ rules, status: s, currency, onEdit, onDeadline }
       <header className="challenge-head">
         <div>
           <h2>
-            Challenge <span className="muted">· {money(rules.startBalance)}</span>
+            {account.name || 'Untitled'} <span className={`badge status-${account.status}`}>{STATUS_LABEL[account.status]}</span>
           </h2>
           <span className="challenge-balance">
             Balance <strong>{money(s.balance)}</strong>
+            {account.payouts.length > 0 && (
+              <>
+                {' · '}
+                {account.payouts.length} payout{account.payouts.length === 1 ? '' : 's'}{' '}
+                <strong className="pos">{money(payoutTotal(account))}</strong>
+              </>
+            )}
           </span>
+          {account.showStart && (
+            <span className="challenge-dates">
+              {rules.startDate ? (
+                account.evalEnd ? (
+                  <>
+                    Eval {formatDay(rules.startDate)} → {formatDay(account.evalEnd)} · {evalDays} day{evalDays === 1 ? '' : 's'}
+                  </>
+                ) : (
+                  <>
+                    Started {formatDay(rules.startDate)} · day {evalDays}
+                  </>
+                )
+              ) : (
+                <button className="link" onClick={onEdit}>
+                  Set the start date
+                </button>
+              )}
+            </span>
+          )}
         </div>
-        <Countdown endsAt={rules.endsAt} done={s.passed} onChange={onDeadline} />
+        {account.showRemaining && inEval && (
+          <Countdown endsAt={rules.endsAt} done={s.passed} onChange={(endsAt) => onAccount({ ...account, rules: { ...rules, endsAt } })} />
+        )}
         <div className="challenge-actions">
-          <span className={`badge tone-bg-${badge.tone}`}>{badge.text}</span>
+          {rules.enabled && inEval && <span className={`badge tone-bg-${badge.tone}`}>{badge.text}</span>}
+          {inEval && (
+            <>
+              <button className="ghost small pass-btn" onClick={() => finish('passed')}>
+                ✓ Passed
+              </button>
+              <button className="ghost small fail-btn" onClick={() => finish('failed')}>
+                ✗ Failed
+              </button>
+            </>
+          )}
           <button className="ghost small" onClick={onEdit}>
-            Edit rules
+            Edit account
           </button>
         </div>
       </header>
 
+      {rules.enabled && (
       <div className="meters">
         <Meter
           label="Profit target"
@@ -200,6 +248,7 @@ export function ChallengeCard({ rules, status: s, currency, onEdit, onDeadline }
           tone="good"
         />
       </div>
+      )}
     </section>
   )
 }

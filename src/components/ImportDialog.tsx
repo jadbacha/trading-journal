@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
 import type { ColumnMapping, DateOrder, ParsedCsv } from '../csv'
 import { guessMapping, isNetColumn, parseCsv, rowsToTrades } from '../csv'
+import type { Account } from '../accounts'
 import type { Trade } from '../types'
 import { formatMoney, netPnl } from '../stats'
 
 interface Props {
+  accounts: Account[]
+  defaultAccountId: string
   existingIds: Set<string>
   currency: string
   commission: number
@@ -21,7 +24,8 @@ const FIELDS: { key: keyof ColumnMapping; label: string; required?: boolean }[] 
   { key: 'qty', label: 'Quantity' },
 ]
 
-export function ImportDialog({ existingIds, currency, commission, onImport, onClose }: Props) {
+export function ImportDialog({ accounts, defaultAccountId, existingIds, currency, commission, onImport, onClose }: Props) {
+  const [accountId, setAccountId] = useState(defaultAccountId)
   const [fileName, setFileName] = useState('')
   const [parsed, setParsed] = useState<ParsedCsv | null>(null)
   const [mapping, setMapping] = useState<ColumnMapping | null>(null)
@@ -46,7 +50,7 @@ export function ImportDialog({ existingIds, currency, commission, onImport, onCl
 
   const preview = useMemo(() => {
     if (!parsed || !mapping?.date || !mapping.pnl) return null
-    const { trades, skipped } = rowsToTrades(parsed, mapping, { subtractFees, dateOrder })
+    const { trades, skipped } = rowsToTrades(parsed, mapping, { subtractFees, dateOrder, accountId })
     const fresh = trades.filter((t) => !existingIds.has(t.id))
     const dates = trades.map((t) => t.date).sort()
     return {
@@ -58,7 +62,7 @@ export function ImportDialog({ existingIds, currency, commission, onImport, onCl
       from: dates[0],
       to: dates[dates.length - 1],
     }
-  }, [parsed, mapping, subtractFees, dateOrder, existingIds, commission])
+  }, [parsed, mapping, subtractFees, dateOrder, existingIds, commission, accountId])
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -74,6 +78,17 @@ export function ImportDialog({ existingIds, currency, commission, onImport, onCl
           Export your trade history as CSV from your Trading Pit platform (Quantower, NinjaTrader, Tradovate, ATAS…) and
           drop it here. Re-importing the same file won't create duplicates.
         </p>
+
+        <label className="stack import-account">
+          <span className="muted">Import into</span>
+          <select value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name || 'Untitled'}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="dropzone">
           <input

@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import type { ChallengeRules } from '../challenge'
-import { formatRemaining, parseDuration, toLocalInput } from '../challenge'
 import type { JournalData, Settings } from '../types'
 import { blobToDataUrl, clearImages, dataUrlToBlob, getImage, putImage } from '../images'
 import { DEFAULT_MISTAKES } from '../mistakes'
@@ -15,23 +13,9 @@ interface Props {
 
 export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) {
   const [message, setMessage] = useState('')
-  const [remaining, setRemaining] = useState('')
   const [tagsText, setTagsText] = useState(() => data.settings.mistakeTags.join(', '))
   const [busy, setBusy] = useState(false)
   const { settings } = data
-  const rules = settings.challenge
-  const setRules = (patch: Partial<ChallengeRules>) => onSettings({ ...settings, challenge: { ...rules, ...patch } })
-  const amount = (key: 'startBalance' | 'profitTarget' | 'dailyLossLimit' | 'maxDrawdown' | 'consistencyPct' | 'minTradingDays', label: string) => (
-    <label>
-      <span>{label}</span>
-      <input
-        type="number"
-        min={0}
-        value={rules[key]}
-        onChange={(e) => setRules({ [key]: Math.max(0, Number(e.target.value) || 0) })}
-      />
-    </label>
-  )
 
   const saveTags = () => {
     const tags = [...new Set(tagsText.split(',').map((t) => t.trim()).filter(Boolean))]
@@ -125,73 +109,6 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
           scratch days counted as breakeven.
         </p>
 
-        <h3>Challenge</h3>
-        <label className="check">
-          <input type="checkbox" checked={rules.enabled} onChange={(e) => setRules({ enabled: e.target.checked })} />
-          Track a prop-firm challenge
-        </label>
-        {rules.enabled && (
-          <>
-            <div className="mapping">
-              {amount('startBalance', 'Starting balance')}
-              {amount('profitTarget', 'Profit target')}
-              {amount('dailyLossLimit', 'Daily loss limit')}
-              {amount('maxDrawdown', 'Max drawdown')}
-              {amount('consistencyPct', 'Consistency (% of target)')}
-              {amount('minTradingDays', 'Min trading days')}
-              <label>
-                <span>Challenge start date</span>
-                <input type="date" value={rules.startDate} onChange={(e) => setRules({ startDate: e.target.value })} />
-              </label>
-            </div>
-            <div className="mapping deadline">
-              <label>
-                <span>Challenge ends (your local time)</span>
-                <div className="inline-field">
-                  <input
-                    type="datetime-local"
-                    value={toLocalInput(rules.endsAt)}
-                    onChange={(e) => setRules({ endsAt: e.target.value ? new Date(e.target.value).toISOString() : '' })}
-                  />
-                  {rules.endsAt && (
-                    <button type="button" className="ghost" onClick={() => setRules({ endsAt: '' })}>
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </label>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  const ms = parseDuration(remaining)
-                  if (ms === null) return setMessage('Enter the time left like 15d 12h 26m')
-                  setRules({ endsAt: new Date(Date.now() + ms).toISOString() })
-                  setRemaining('')
-                  setMessage(`Deadline set: ${formatRemaining(ms)} from now.`)
-                }}
-              >
-                <label>
-                  <span>…or paste the time left from your dashboard</span>
-                  <div className="inline-field">
-                    <input placeholder="15d 12h 26m" value={remaining} onChange={(e) => setRemaining(e.target.value)} />
-                    <button type="submit" className="ghost">
-                      Set
-                    </button>
-                  </div>
-                </label>
-              </form>
-            </div>
-            <label className="check">
-              <input type="checkbox" checked={rules.trailing} onChange={(e) => setRules({ trailing: e.target.checked })} />
-              Drawdown trails the highest end-of-day balance
-            </label>
-            <p className="muted">
-              Only trades on or after the start date count. Leave it empty to count everything. Breaches are
-              checked on end-of-day balances, so an intraday dip won't show here.
-            </p>
-          </>
-        )}
-
         <h3>Mistake tags</h3>
         <label className="stack">
           <span className="muted">Comma-separated. These are the options when you tag a trade.</span>
@@ -218,8 +135,8 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
           <button
             className="danger"
             onClick={() => {
-              if (confirm('Delete all trades and journal entries? This cannot be undone.')) {
-                onReplace({ trades: [], notes: {}, settings })
+              if (confirm('Delete all trades, journal entries and screenshots? Your accounts and payouts are kept. This cannot be undone.')) {
+                onReplace({ ...data, trades: [], notes: {} })
                 clearImages().catch(() => {})
                 setMessage('All data cleared.')
               }

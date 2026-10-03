@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { DayFlag } from '../challenge'
 import { FLAG_INFO } from '../challenge'
+import type { Account } from '../accounts'
 import type { DayNote, Trade } from '../types'
 import type { DaySummary } from '../stats'
 import { formatMoney, netPnl } from '../stats'
@@ -17,6 +18,9 @@ interface Props {
   commission: number
   flags?: DayFlag[]
   mistakeTags: string[]
+  accounts: Account[]
+  /** The account being viewed, or null for all accounts. */
+  accountId: string | null
   /** Applies a change to this day's note, starting from its latest saved state. */
   onNoteChange: (update: (note: DayNote) => DayNote) => void
   onAddTrade: (trade: Omit<Trade, 'id' | 'date' | 'source'>) => void
@@ -42,6 +46,8 @@ export function DayPanel({
   commission,
   flags,
   mistakeTags,
+  accounts,
+  accountId,
   onNoteChange,
   onAddTrade,
   onTradeMistakes,
@@ -50,6 +56,8 @@ export function DayPanel({
 }: Props) {
   const [pnl, setPnl] = useState('')
   const [symbol, setSymbol] = useState('')
+  const [addTo, setAddTo] = useState(accountId ?? accounts[0]?.id ?? '')
+  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name || 'Untitled'
   const [error, setError] = useState('')
   const [tagging, setTagging] = useState<string | null>(null)
   const [saving, setSaving] = useState<Slot | null>(null)
@@ -107,7 +115,7 @@ export function DayPanel({
       setError('Enter a P&L amount, e.g. 250 or -120.50')
       return
     }
-    onAddTrade({ pnl: value, symbol: symbol.trim() || undefined })
+    onAddTrade({ pnl: value, symbol: symbol.trim() || undefined, accountId: accountId ?? addTo })
     setPnl('')
     setSymbol('')
     setError('')
@@ -188,6 +196,7 @@ export function DayPanel({
                     <span className="trade-meta">
                       {[t.time, t.symbol, t.side, t.qty != null ? `×${t.qty}` : null].filter(Boolean).join(' · ') ||
                         (t.source === 'manual' ? 'Manual entry' : 'Trade')}
+                      {!accountId && accounts.length > 1 && <span className="trade-account"> · {accountName(t.accountId)}</span>}
                     </span>
                     <span className={net > 0 ? 'pos' : net < 0 ? 'neg' : ''}>{formatMoney(net, currency, true)}</span>
                     <button
@@ -239,6 +248,18 @@ export function DayPanel({
           <input placeholder="Symbol (optional)" value={symbol} onChange={(e) => setSymbol(e.target.value)} aria-label="Symbol" />
           <button type="submit">Add</button>
         </form>
+        {!accountId && accounts.length > 1 && (
+          <label className="add-to">
+            <span className="muted">Add to</span>
+            <select value={addTo} onChange={(e) => setAddTo(e.target.value)}>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name || 'Untitled'}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {error && <p className="error">{error}</p>}
       </section>
     </aside>

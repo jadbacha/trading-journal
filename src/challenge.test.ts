@@ -76,9 +76,4 @@ describe('time limit', () => {
     expect(formatRemaining(parseDuration('5h 3m')! + 59_000)).toBe('5h 3m')
     expect(formatRemaining(-1000)).toBe('0m')
   })
-
-  it('defaults to the deadline shown on the dashboard', () => {
-    const shownAt = Date.parse('2026-10-01T23:34:00Z')
-    expect(formatRemaining(Date.parse(defaultRules().endsAt) - shownAt)).toBe('15d 12h 26m')
-  })
 })

@@ -4,6 +4,7 @@ import type { Trade } from './types'
 
 const t = (pnl: number, mistakes?: string[], extra: Partial<Trade> = {}): Trade => ({
   id: String(Math.random()),
+  accountId: 'acc',
   date: '2026-10-01',
   pnl,
   source: 'manual',

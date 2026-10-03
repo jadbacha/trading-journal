@@ -141,7 +141,7 @@ export interface ImportResult {
 export function rowsToTrades(
   parsed: ParsedCsv,
   mapping: ColumnMapping,
-  options: { subtractFees: boolean; dateOrder: DateOrder },
+  options: { subtractFees: boolean; dateOrder: DateOrder; accountId?: string },
 ): ImportResult {
   const trades: Trade[] = []
   let skipped = 0
@@ -165,6 +165,7 @@ export function rowsToTrades(
     seen.set(base, n + 1)
     trades.push({
       id: n === 0 ? base : `${base}-${n}`,
+      accountId: options.accountId ?? '',
       date,
       pnl: Math.round(pnl * 100) / 100,
       gross: !(options.subtractFees && mapping.fees) && !isNetColumn(mapping.pnl) ? true : undefined,

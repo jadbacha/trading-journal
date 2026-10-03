@@ -28,8 +28,7 @@ export const defaultRules = (): ChallengeRules => ({
   trailing: true,
   consistencyPct: 40,
   minTradingDays: 3,
-  // Dashboard showed 15d 12h 26m left on 2026-10-01 at 23:34 UTC.
-  endsAt: '2026-10-17T12:00:00.000Z',
+  endsAt: '',
 })
 
 /** Parses "15d 12h 26m", "3d", "5h 30m" into milliseconds. */

@@ -6,11 +6,16 @@ A simple journal for a The Trading Pit futures account. Each day on the calendar
 - **red** when it's negative
 - **gray** when it's breakeven (exactly 0, or within a ± range you set in Settings)
 
-A **challenge tracker** above the calendar follows your prop-firm objectives: profit target, consistency (best day
-vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, and trading
-days, plus a countdown to the challenge deadline that you can edit or remove right on the card. It's preset for The Trading Pit Futures Prime $50,000 challenge, and **Settings → Challenge** changes the rules.
-Days that came within 80% of the daily loss limit get an orange ⚠, days that hit it get ⛔, and days over the
-consistency cap get ⚑.
+**Accounts:** track as many prop-firm accounts as you like (**Accounts** button). Each one has its price, purchase
+date, status (Evaluation, Passed, Funded, Failed), evaluation start and finish dates, its own challenge rules and
+deadline, and its payouts (date and amount). Pick an account at the top to see its calendar and stats, or
+**All accounts** for everything plus your portfolio: accounts bought, total spent, total payouts, net and **ROI**
+(payouts minus what you paid, divided by what you paid). Imports go into the account you choose.
+
+For a single account, a **challenge tracker** above the calendar follows its objectives: profit target, consistency
+(best day vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, and
+trading days. It can also show the evaluation start date and a countdown to the deadline; choose which in the
+account's settings. **✓ Passed** and **✗ Failed** record when the evaluation ended.
 
 Below the monthly summary, **Performance** shows win rate, average win, average loss (with the win/loss ratio) and
 profit factor for the month on screen or all time. These are per trade and after commissions; breakeven trades

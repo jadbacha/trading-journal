@@ -1,7 +1,9 @@
-import type { ChallengeRules } from './challenge'
+import type { Account } from './accounts'
 
 export interface Trade {
   id: string
+  /** The prop-firm account the trade was taken on. */
+  accountId: string
   /** Trading day the P&L belongs to, YYYY-MM-DD (taken from the exit/close time). */
   date: string
   /** P&L in account currency, as imported or entered. */
@@ -36,12 +38,12 @@ export interface Settings {
   currency: string
   /** Round-trip commission per contract, subtracted from gross trades. */
   commissionPerContract: number
-  challenge: ChallengeRules
   /** Options offered when tagging a trade's mistakes. */
   mistakeTags: string[]
 }
 
 export interface JournalData {
+  accounts: Account[]
   trades: Trade[]
   notes: Record<string, DayNote>
   settings: Settings
