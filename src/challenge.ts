@@ -81,11 +81,17 @@ export interface ChallengeStatus {
   floor: number
   /** True if any end-of-day balance closed at or below the floor in force that day. */
   drawdownBreached: boolean
+  /** All objectives met on some day, with no drawdown breach before it. */
   passed: boolean
+  /** First day the objectives were all met, YYYY-MM-DD. */
+  passedOn: string | null
+  /** What is still needed to pass, in words; empty once passed. */
+  missing: string[]
   flags: Map<string, DayFlag[]>
 }
 
 const round = (n: number) => Math.round(n * 100) / 100
+const money = (n: number) => `$${round(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRules, today: string): ChallengeStatus {
   const counted = [...days].filter((d) => !rules.startDate || d.date >= rules.startDate).sort((a, b) => a.date.localeCompare(b.date))
@@ -95,9 +101,10 @@ export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRule
   let floor = rules.startBalance - rules.maxDrawdown
   let drawdownBreached = false
   let bestDay = 0
+  let passedOn: string | null = null
   const flags = new Map<string, DayFlag[]>()
 
-  for (const d of counted) {
+  for (const [i, d] of counted.entries()) {
     balance += d.pnl
     // Only end-of-day balances are known from the trade history, so intraday breaches can't be seen here.
     if (balance <= floor) drawdownBreached = true
@@ -107,6 +114,14 @@ export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRule
       if (rules.lockAtStart) floor = Math.min(floor, rules.startBalance)
     }
     bestDay = Math.max(bestDay, d.pnl)
+    if (
+      passedOn === null &&
+      !drawdownBreached &&
+      balance - rules.startBalance >= rules.profitTarget &&
+      i + 1 >= rules.minTradingDays &&
+      (consistencyCap <= 0 || bestDay <= consistencyCap)
+    )
+      passedOn = d.date
 
     const f: DayFlag[] = []
     if (rules.dailyLossLimit > 0 && d.pnl <= -rules.dailyLossLimit) f.push('limit-hit')
@@ -116,6 +131,15 @@ export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRule
   }
 
   const profit = round(balance - rules.startBalance)
+  const missing: string[] = []
+  if (passedOn === null) {
+    if (drawdownBreached) missing.push('max drawdown was breached')
+    if (profit < rules.profitTarget) missing.push(`${money(rules.profitTarget - profit)} more profit`)
+    const daysLeft = rules.minTradingDays - counted.length
+    if (daysLeft > 0) missing.push(`${daysLeft} more trading day${daysLeft === 1 ? '' : 's'}`)
+    if (consistencyCap > 0 && bestDay > consistencyCap)
+      missing.push(`best day ${money(bestDay)} is over the ${money(consistencyCap)} consistency cap`)
+  }
   return {
     balance: round(balance),
     profit,
@@ -125,11 +149,9 @@ export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRule
     todayPnl: counted.find((d) => d.date === today)?.pnl ?? 0,
     floor: round(floor),
     drawdownBreached,
-    passed:
-      !drawdownBreached &&
-      profit >= rules.profitTarget &&
-      counted.length >= rules.minTradingDays &&
-      bestDay <= consistencyCap,
+      passed: passedOn !== null,
+    passedOn,
+    missing,
     flags,
   }
 }

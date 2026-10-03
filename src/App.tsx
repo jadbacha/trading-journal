@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { formatDay, withStatus } from './accounts'
+import { applyAutoPass } from './autopass'
 import type { DayFlag } from './challenge'
 import { challengeStatus } from './challenge'
 import { AccountsDialog } from './components/AccountsDialog'
@@ -31,8 +33,14 @@ const isEmptyNote = (n: DayNote) =>
   !n.text.trim() && !n.plan?.trim() && !n.rating && !n.images?.length && !n.planImages?.length
 
 export default function App() {
-  const [data, setData] = useState<JournalData>(loadData)
   const [now] = useState(() => new Date())
+  const [data, setRawData] = useState<JournalData>(() => applyAutoPass(loadData(), isoDay(new Date())))
+  // Every change goes through auto-pass, so an account that meets its objectives is marked passed at once.
+  const setData = useCallback(
+    (update: JournalData | ((d: JournalData) => JournalData)) =>
+      setRawData((d) => applyAutoPass(typeof update === 'function' ? update(d) : update, isoDay(new Date()))),
+    [],
+  )
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() })
   const [selected, setSelected] = useState<string | null>(null)
   const [dialog, setDialog] = useState<'import' | 'settings' | 'accounts' | null>(null)
@@ -74,6 +82,7 @@ export default function App() {
     [days, monthPrefix, perfScope],
   )
   const today = isoDay(now)
+
   const challenge = useMemo(() => (account ? challengeStatus(days.values(), account.rules, today) : null), [days, account, today])
   const flags = useMemo(() => {
     if (!account?.rules.enabled || !challenge) return undefined
@@ -142,6 +151,29 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {accounts
+        .filter((a) => a.passNotice)
+        .map((a) => (
+          <div key={a.id} className="notice" role="status">
+            <span>
+              🎉 <strong>{a.name || 'Account'}</strong> met every objective on {formatDay(a.evalEnd)} and is now marked{' '}
+              <strong>Passed</strong>.
+            </span>
+            <span className="notice-actions">
+              <button
+                className="link"
+                // Undo also turns auto-pass off, or it would switch straight back.
+                onClick={() => updateAccount({ ...withStatus(a, 'evaluation', today), autoPass: false, passNotice: false })}
+              >
+                Undo
+              </button>
+              <button className="icon-btn small" aria-label="Dismiss" onClick={() => updateAccount({ ...a, passNotice: false })}>
+                ×
+              </button>
+            </span>
+          </div>
+        ))}
 
       <main className={selected ? 'with-panel' : ''}>
         <section className="month">

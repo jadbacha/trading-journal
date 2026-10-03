@@ -17,8 +17,10 @@ account and pick that account when importing. The same file can go into two acco
 For a single account, a **challenge tracker** above the calendar follows its objectives: profit target, consistency
 (best day vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, which can lock at the starting balance once the balance is a full drawdown above it, and
 trading days. It can also show the evaluation start date and a countdown to the deadline; choose which in the
-account's settings, along with which objectives appear. **✓ Passed** and **✗ Failed** record when the evaluation
-ended; passed and funded accounts hide the profit target, consistency and trading days, which no longer apply.
+account's settings, along with which objectives appear. When every objective is met (profit target, minimum days,
+consistency, no drawdown breach) the account switches to **Passed** by itself, dated the day it happened; until then
+the tracker lists what is still needed. **✓ Passed** and **✗ Failed** set it by hand. Once the evaluation has
+ended, passed and funded accounts hide the profit target, consistency and trading days, which no longer apply.
 
 The summary (P&L or total profit, green/red/breakeven days, win rate by days, best and worst day) and **Performance**
 follow the **This month / All time** switch. Performance shows win rate by trades, average win, average loss (with the win/loss ratio) and

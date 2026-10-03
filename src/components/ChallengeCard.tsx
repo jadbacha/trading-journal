@@ -204,6 +204,13 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
         </div>
       </header>
 
+      {rules.enabled && inEval && s.missing.length > 0 && (
+        <p className={`still-needed ${s.profit >= rules.profitTarget ? 'target-hit' : ''}`}>
+          {s.profit >= rules.profitTarget ? '🎯 Profit target reached. Still needed: ' : 'To pass: '}
+          {s.missing.join(' · ')}
+        </p>
+      )}
+
       {rules.enabled && (
       <div className="meters">
         {account.showProfitTarget && (

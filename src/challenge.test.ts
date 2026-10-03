@@ -104,3 +104,40 @@ describe('drawdown lock', () => {
     expect(s.drawdownBreached).toBe(true)
   })
 })
+
+describe('passing', () => {
+  it('passes on the first day every objective is met', () => {
+    const days = [day('2026-10-01', 1100), day('2026-10-02', 1000), day('2026-10-05', 950), day('2026-10-06', 200)]
+    const s = challengeStatus(days, defaultRules(), '')
+    expect(s.passedOn).toBe('2026-10-05')
+    expect(s.passed).toBe(true)
+    expect(s.missing).toEqual([])
+  })
+
+  it('lists what is missing when the profit target is hit early', () => {
+    // Target met in three days on an account that needs five.
+    const s = challengeStatus([day('2026-10-01', 1100), day('2026-10-02', 1000), day('2026-10-05', 950)], { ...defaultRules(), minTradingDays: 5 }, '')
+    expect(s.profit).toBe(3050)
+    expect(s.passedOn).toBeNull()
+    expect(s.missing).toEqual(['2 more trading days'])
+  })
+
+  it('does not pass with a best day over the consistency cap', () => {
+    const s = challengeStatus([day('2026-10-01', 2500), day('2026-10-02', 300), day('2026-10-05', 300)], defaultRules(), '')
+    expect(s.profit).toBe(3100)
+    expect(s.passed).toBe(false)
+    expect(s.missing).toEqual(['best day $2,500.00 is over the $1,200.00 consistency cap'])
+  })
+
+  it('reports the remaining profit and days early in the evaluation', () => {
+    const s = challengeStatus([day('2026-10-01', 470.1)], defaultRules(), '')
+    expect(s.missing).toEqual(['$2,529.90 more profit', '2 more trading days'])
+  })
+
+  it('never passes after a drawdown breach', () => {
+    const days = [day('2026-10-01', -2100), day('2026-10-02', 1200), day('2026-10-05', 1200), day('2026-10-06', 1200), day('2026-10-07', 1200), day('2026-10-08', 600)]
+    const s = challengeStatus(days, defaultRules(), '')
+    expect(s.passed).toBe(false)
+    expect(s.missing[0]).toBe('max drawdown was breached')
+  })
+})

@@ -35,6 +35,10 @@ export interface Account {
   showProfitTarget: boolean
   showConsistency: boolean
   showTradingDays: boolean
+  /** Switch to passed by itself once every objective is met. */
+  autoPass: boolean
+  /** Set when auto-pass switched the account; cleared once the announcement is dismissed. */
+  passNotice?: boolean
   payouts: Payout[]
 }
 
@@ -53,6 +57,7 @@ export const defaultAccount = (patch: Partial<Account> = {}): Account => ({
   showProfitTarget: true,
   showConsistency: true,
   showTradingDays: true,
+  autoPass: true,
   payouts: [],
   ...patch,
 })

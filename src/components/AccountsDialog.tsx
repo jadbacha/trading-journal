@@ -136,7 +136,9 @@ function AccountEditor({
     </label>
   )
 
-  const setStatus = (status: AccountStatus) => onChange(withStatus(a, status, today))
+  // Going back to evaluation by hand turns auto-pass off, or a met target would flip it straight back.
+  const setStatus = (status: AccountStatus) =>
+    onChange({ ...withStatus(a, status, today), autoPass: status === 'evaluation' && a.status !== 'evaluation' ? false : a.autoPass })
 
   const evalDays = rules.startDate ? daysInclusive(rules.startDate, a.evalEnd || today) : null
   const payouts = [...a.payouts].sort((x, y) => y.date.localeCompare(x.date))
@@ -202,6 +204,10 @@ function AccountEditor({
         <label className="check">
           <input type="checkbox" checked={rules.enabled} onChange={(e) => setRules({ enabled: e.target.checked })} />
           Objectives
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={a.autoPass} onChange={(e) => set({ autoPass: e.target.checked })} />
+          Mark as passed automatically when every objective is met
         </label>
       </div>
       {rules.enabled && (
