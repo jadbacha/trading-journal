@@ -13,7 +13,7 @@ deadline, and its payouts (date and amount). Pick an account at the top to see i
 (payouts minus what you paid, divided by what you paid). Imports go into the account you choose.
 
 For a single account, a **challenge tracker** above the calendar follows its objectives: profit target, consistency
-(best day vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, and
+(best day vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, which can lock at the starting balance once the balance is a full drawdown above it, and
 trading days. It can also show the evaluation start date and a countdown to the deadline; choose which in the
 account's settings, along with which objectives appear. **✓ Passed** and **✗ Failed** record when the evaluation
 ended; passed and funded accounts hide the profit target, consistency and trading days, which no longer apply.

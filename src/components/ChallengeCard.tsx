@@ -137,6 +137,8 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
   const dailyRatio = rules.dailyLossLimit ? todayLoss / rules.dailyLossLimit : 0
   const roomToFloor = s.balance - s.floor
   const drawdownUsed = rules.maxDrawdown ? 1 - roomToFloor / rules.maxDrawdown : 0
+  const locks = rules.trailing && rules.lockAtStart
+  const locked = locks && s.floor >= rules.startBalance
 
   const badge = s.drawdownBreached
     ? { text: 'Max drawdown breached', tone: 'bad' }
@@ -238,9 +240,13 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
           tone={dailyRatio >= 1 ? 'bad' : dailyRatio >= NEAR_LIMIT ? 'warn' : dailyRatio > 0 ? 'neutral' : 'good'}
         />
         <Meter
-          label={`Max drawdown${rules.trailing ? ' (trailing)' : ''}`}
+          label={`Max drawdown${locked ? ' (locked)' : rules.trailing ? ' (trailing)' : ''}`}
           value={money(Math.max(0, roomToFloor))}
-          detail={`room left · floor ${money(s.floor)}`}
+          detail={
+            locked
+              ? `room left · floor locked at ${money(s.floor)}`
+              : `room left · floor ${money(s.floor)}${locks ? ` · locks at ${money(rules.startBalance)}` : ''}`
+          }
           ratio={drawdownUsed}
           tone={s.drawdownBreached || drawdownUsed >= 1 ? 'bad' : drawdownUsed >= NEAR_LIMIT ? 'warn' : 'neutral'}
         />

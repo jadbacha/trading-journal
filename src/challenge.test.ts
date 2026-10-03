@@ -77,3 +77,30 @@ describe('time limit', () => {
     expect(formatRemaining(-1000)).toBe('0m')
   })
 })
+
+describe('drawdown lock', () => {
+  it('stops trailing once the floor reaches the starting balance', () => {
+    // Balance goes 50,000 → 51,500 → 52,600 → 53,000 → 50,500.
+    const days = [day('2026-10-01', 1500), day('2026-10-02', 1100), day('2026-10-05', 400), day('2026-10-06', -2500)]
+    const s = challengeStatus(days, defaultRules(), '')
+    expect(s.floor).toBe(50000)
+    expect(s.balance).toBe(50500)
+    expect(s.drawdownBreached).toBe(false)
+  })
+
+  it('locks exactly at a 52,000 balance', () => {
+    expect(challengeStatus([day('2026-10-01', 2000)], defaultRules(), '').floor).toBe(50000)
+    expect(challengeStatus([day('2026-10-01', 1999)], defaultRules(), '').floor).toBe(49999)
+  })
+
+  it('keeps trailing above the start when the lock is off', () => {
+    const s = challengeStatus([day('2026-10-01', 3000), day('2026-10-02', -500)], { ...defaultRules(), lockAtStart: false }, '')
+    expect(s.floor).toBe(51000)
+  })
+
+  it('breaches at the locked floor', () => {
+    const s = challengeStatus([day('2026-10-01', 2500), day('2026-10-02', -2500)], defaultRules(), '')
+    expect(s.floor).toBe(50000)
+    expect(s.drawdownBreached).toBe(true)
+  })
+})

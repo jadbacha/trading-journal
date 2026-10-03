@@ -10,6 +10,8 @@ export interface ChallengeRules {
   maxDrawdown: number
   /** The drawdown floor follows the highest end-of-day balance instead of staying at start − max drawdown. */
   trailing: boolean
+  /** A trailing floor stops rising once it reaches the starting balance. */
+  lockAtStart: boolean
   /** Best day may be at most this % of the profit target. */
   consistencyPct: number
   minTradingDays: number
@@ -26,6 +28,7 @@ export const defaultRules = (): ChallengeRules => ({
   dailyLossLimit: 1000,
   maxDrawdown: 2000,
   trailing: true,
+  lockAtStart: true,
   consistencyPct: 40,
   minTradingDays: 3,
   endsAt: '',
@@ -98,7 +101,11 @@ export function challengeStatus(days: Iterable<DaySummary>, rules: ChallengeRule
     balance += d.pnl
     // Only end-of-day balances are known from the trade history, so intraday breaches can't be seen here.
     if (balance <= floor) drawdownBreached = true
-    if (rules.trailing) floor = Math.max(floor, balance - rules.maxDrawdown)
+    if (rules.trailing) {
+      floor = Math.max(floor, balance - rules.maxDrawdown)
+      // e.g. $50K account, $2K drawdown: from a $52K balance on, the floor stays at $50K.
+      if (rules.lockAtStart) floor = Math.min(floor, rules.startBalance)
+    }
     bestDay = Math.max(bestDay, d.pnl)
 
     const f: DayFlag[] = []

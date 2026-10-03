@@ -276,6 +276,13 @@ function AccountEditor({
             <input type="checkbox" checked={rules.trailing} onChange={(e) => setRules({ trailing: e.target.checked })} />
             Drawdown trails the highest end-of-day balance
           </label>
+          {rules.trailing && (
+            <label className="check">
+              <input type="checkbox" checked={rules.lockAtStart} onChange={(e) => setRules({ lockAtStart: e.target.checked })} />
+              Stop trailing at the starting balance (the floor locks at {formatMoney(rules.startBalance, currency)} once the balance
+              reaches {formatMoney(rules.startBalance + rules.maxDrawdown, currency)})
+            </label>
+          )}
         </>
       )}
 
