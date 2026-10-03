@@ -19,8 +19,8 @@ trading days. It can also show the evaluation start date and a countdown to the 
 account's settings, along with which objectives appear. **✓ Passed** and **✗ Failed** record when the evaluation
 ended; passed and funded accounts hide the profit target, consistency and trading days, which no longer apply.
 
-The summary (P&L or total profit, green/red/breakeven days, green-day rate, best and worst day) and **Performance**
-follow the **This month / All time** switch. Performance shows win rate, average win, average loss (with the win/loss ratio) and
+The summary (P&L or total profit, green/red/breakeven days, win rate by days, best and worst day) and **Performance**
+follow the **This month / All time** switch. Performance shows win rate by trades, average win, average loss (with the win/loss ratio) and
 profit factor. These are per trade and after commissions; breakeven trades don't count toward the win rate.
 
 Click a day to open its journal:

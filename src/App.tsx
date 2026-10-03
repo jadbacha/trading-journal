@@ -98,6 +98,8 @@ export default function App() {
     [scopedTrades, settings.commissionPerContract],
   )
   const tradingDays = period.green + period.red + period.gray
+  // Like the trade win rate, breakeven days count as neither a win nor a loss.
+  const dayWinRate = period.green + period.red ? period.green / (period.green + period.red) : null
   const existingIds = useMemo(() => new Set(data.trades.map((t) => t.id)), [data.trades])
 
   const updateAccount = (next: (typeof accounts)[number]) =>
@@ -214,11 +216,13 @@ export default function App() {
               )}
             </div>
             <div className="stat">
-              <span className="stat-label">Green-day rate</span>
-              <span className="stat-value">{tradingDays ? `${Math.round((period.green / tradingDays) * 100)}%` : '—'}</span>
+              <span className="stat-label">Win rate (days)</span>
+              <span className={`stat-value ${dayWinRate === null ? '' : dayWinRate >= 0.5 ? 'pos' : 'neg'}`}>
+                {dayWinRate === null ? '—' : `${Math.round(dayWinRate * 100)}%`}
+              </span>
               {tradingDays > 0 && (
                 <span className="meter-detail">
-                  {tradingDays} trading day{tradingDays === 1 ? '' : 's'}
+                  {period.green}W / {period.red}L{period.gray ? ` / ${period.gray} BE` : ''} · {tradingDays} day{tradingDays === 1 ? '' : 's'}
                 </span>
               )}
             </div>

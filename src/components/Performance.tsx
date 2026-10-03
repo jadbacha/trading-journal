@@ -22,7 +22,7 @@ export function Performance({ stats: s, mistakes, scope, monthName, currency }: 
       </div>
       <div className="stats perf-stats">
         <div className="stat">
-          <span className="stat-label">Win rate</span>
+          <span className="stat-label">Win rate (trades)</span>
           <span className={`stat-value ${winTone}`}>{s.winRate === null ? '—' : `${Math.round(s.winRate * 100)}%`}</span>
           <span className="meter-detail">
             {s.wins}W / {s.losses}L{s.breakeven ? ` / ${s.breakeven} BE` : ''} · {s.trades} trade{s.trades === 1 ? '' : 's'}
