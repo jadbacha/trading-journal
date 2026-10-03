@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { guessMapping, parseCsv, parseDay, parseMoney, rowsToTrades } from './csv'
+import { guessMapping, importKey, parseCsv, parseDay, parseMoney, rowsToTrades } from './csv'
 import { classify, summarizeDays, tradeStats } from './stats'
 
 describe('parseMoney', () => {
@@ -66,6 +66,25 @@ describe('importing platform exports', () => {
     expect(mapping).toMatchObject({ date: 'Exit time', pnl: 'Profit', fees: 'Commission', side: 'Market pos.' })
     const { trades } = rowsToTrades(parsed, mapping, { subtractFees: true, dateOrder: 'auto' })
     expect(trades[0]).toMatchObject({ date: '2026-09-30', pnl: 95.5, symbol: 'ES 12-26', side: 'Long', time: '15:45' })
+  })
+
+  it('lets the same file go into two accounts but not twice into one', () => {
+    const parsed = parseCsv('Date,Net P/L\n2026-10-01,10\n2026-10-02,-5')
+    const opts = { subtractFees: false, dateOrder: 'auto' as const }
+    const a = rowsToTrades(parsed, guessMapping(parsed.headers), { ...opts, accountId: 'acc-1' }).trades
+    const b = rowsToTrades(parsed, guessMapping(parsed.headers), { ...opts, accountId: 'acc-2' }).trades
+    expect(a.map((t) => t.accountId)).toEqual(['acc-1', 'acc-1'])
+    expect(new Set([...a, ...b].map((t) => t.id)).size).toBe(4)
+    const inA = new Set(a.map(importKey))
+    expect(b.some((t) => inA.has(importKey(t)))).toBe(false)
+    expect(rowsToTrades(parsed, guessMapping(parsed.headers), { ...opts, accountId: 'acc-1' }).trades.every((t) => inA.has(importKey(t)))).toBe(true)
+  })
+
+  it('recognises trades imported before accounts had their own ids', () => {
+    const parsed = parseCsv('Date,Net P/L\n2026-10-01,10')
+    const [legacy] = rowsToTrades(parsed, guessMapping(parsed.headers), { subtractFees: false, dateOrder: 'auto' }).trades
+    const [fresh] = rowsToTrades(parsed, guessMapping(parsed.headers), { subtractFees: false, dateOrder: 'auto', accountId: 'acc-1' }).trades
+    expect(importKey({ ...legacy, accountId: 'acc-1' })).toBe(importKey(fresh))
   })
 
   it('gives identical files identical ids but keeps duplicate rows within a file', () => {

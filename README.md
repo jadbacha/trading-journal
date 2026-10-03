@@ -11,7 +11,8 @@ A simple journal for a The Trading Pit futures account. Each day on the calendar
 date, status (Evaluation, Passed, Funded, Failed), evaluation start and finish dates, its own challenge rules and
 deadline, and its payouts (date and amount). Pick an account at the top to see its calendar and stats, or
 **All accounts** for everything plus your portfolio: accounts bought, total spent, total payouts, net and **ROI**
-(payouts minus what you paid, divided by what you paid). Imports go into the account you choose.
+(payouts minus what you paid, divided by what you paid). Each account keeps its own trades: export one CSV per
+account and pick that account when importing. The same file can go into two accounts, but not twice into one.
 
 For a single account, a **challenge tracker** above the calendar follows its objectives: profit target, consistency
 (best day vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, which can lock at the starting balance once the balance is a full drawdown above it, and

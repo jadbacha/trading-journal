@@ -164,7 +164,7 @@ export function rowsToTrades(
     const n = seen.get(base) ?? 0
     seen.set(base, n + 1)
     trades.push({
-      id: n === 0 ? base : `${base}-${n}`,
+      id: withAccount(n === 0 ? base : `${base}-${n}`, options.accountId),
       accountId: options.accountId ?? '',
       date,
       pnl: Math.round(pnl * 100) / 100,
@@ -198,6 +198,15 @@ function tradovatePair(row: Record<string, string>, mapping: ColumnMapping, orde
   const isLong = sortKey(bought) <= sortKey(sold)
   return { side: isLong ? 'Long' : 'Short', closeTime: isLong ? sold : bought }
 }
+
+/**
+ * Imported ids are the row's content hash plus the account, so the same file can go into two
+ * accounts. Trades imported before accounts existed have the bare hash.
+ */
+const withAccount = (id: string, accountId?: string) => (accountId ? `${id}@${accountId}` : id)
+
+/** Identifies an imported trade within its account, whichever id scheme it was saved with. */
+export const importKey = (t: Pick<Trade, 'id' | 'accountId'>) => `${t.accountId}|${t.id.split('@')[0]}`
 
 /** Stable id from the row's contents, so importing the same file twice adds nothing. */
 function rowId(row: Record<string, string>): string {

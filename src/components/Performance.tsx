@@ -1,6 +1,6 @@
 import type { MistakeReport } from '../mistakes'
 import type { TradeStats } from '../stats'
-import { formatMoney } from '../stats'
+import { formatMoney, GOOD_WIN_RATE } from '../stats'
 
 interface Props {
   stats: TradeStats
@@ -13,7 +13,7 @@ interface Props {
 const pf = (n: number | null) => (n === null ? '—' : n === Infinity ? '∞' : n.toFixed(2))
 
 export function Performance({ stats: s, mistakes, scope, monthName, currency }: Props) {
-  const winTone = s.winRate === null ? '' : s.winRate >= 0.5 ? 'pos' : 'neg'
+  const winTone = s.winRate === null ? '' : s.winRate >= GOOD_WIN_RATE ? 'pos' : 'neg'
   const pfTone = s.profitFactor === null ? '' : s.profitFactor >= 1 ? 'pos' : 'neg'
   return (
     <section className="perf" aria-label="Trade performance">

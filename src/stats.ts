@@ -124,6 +124,9 @@ export function tradeStats(trades: Trade[], commissionPerContract: number, break
   }
 }
 
+/** A win rate at or above this shows green, below it red. */
+export const GOOD_WIN_RATE = 0.4
+
 export const isoDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 

@@ -10,9 +10,10 @@ import { DayPanel } from './components/DayPanel'
 import { Performance } from './components/Performance'
 import { ImportDialog } from './components/ImportDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { importKey } from './csv'
 import { mistakeReport } from './mistakes'
 import { loadData, saveData } from './storage'
-import { describeRange, formatMoney, isoDay, netPnl, periodStats, summarizeDays, tradeStats } from './stats'
+import { describeRange, formatMoney, GOOD_WIN_RATE, isoDay, netPnl, periodStats, summarizeDays, tradeStats } from './stats'
 import type { DayNote, JournalData } from './types'
 
 const VIEW_KEY = 'trading-journal:view'
@@ -100,7 +101,7 @@ export default function App() {
   const tradingDays = period.green + period.red + period.gray
   // Like the trade win rate, breakeven days count as neither a win nor a loss.
   const dayWinRate = period.green + period.red ? period.green / (period.green + period.red) : null
-  const existingIds = useMemo(() => new Set(data.trades.map((t) => t.id)), [data.trades])
+  const importedKeys = useMemo(() => new Set(data.trades.map(importKey)), [data.trades])
 
   const updateAccount = (next: (typeof accounts)[number]) =>
     setData((d) => ({ ...d, accounts: d.accounts.map((a) => (a.id === next.id ? next : a)) }))
@@ -217,7 +218,7 @@ export default function App() {
             </div>
             <div className="stat">
               <span className="stat-label">Win rate (days)</span>
-              <span className={`stat-value ${dayWinRate === null ? '' : dayWinRate >= 0.5 ? 'pos' : 'neg'}`}>
+              <span className={`stat-value ${dayWinRate === null ? '' : dayWinRate >= GOOD_WIN_RATE ? 'pos' : 'neg'}`}>
                 {dayWinRate === null ? '—' : `${Math.round(dayWinRate * 100)}%`}
               </span>
               {tradingDays > 0 && (
@@ -312,8 +313,8 @@ export default function App() {
       {dialog === 'import' && (
         <ImportDialog
           accounts={accounts}
-          defaultAccountId={account?.id ?? accounts[0].id}
-          existingIds={existingIds}
+          defaultAccountId={account?.id ?? (accounts.length === 1 ? accounts[0].id : '')}
+          importedKeys={importedKeys}
           currency={settings.currency}
           commission={settings.commissionPerContract}
           onClose={() => setDialog(null)}

@@ -548,3 +548,6 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
   .be-fields { grid-template-columns: 1fr; }
   .be-fields .muted { grid-column: auto; }
 }
+
+select.needs-choice { border-color: var(--warn); }
+.import-account > span { font-size: 0.9rem; }
