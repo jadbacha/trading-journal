@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { DayFlag } from './challenge'
 import { challengeStatus } from './challenge'
 import { AccountsDialog } from './components/AccountsDialog'
 import { PortfolioCard } from './components/PortfolioCard'
@@ -70,7 +71,17 @@ export default function App() {
   )
   const today = isoDay(now)
   const challenge = useMemo(() => (account ? challengeStatus(days.values(), account.rules, today) : null), [days, account, today])
-  const flags = account?.rules.enabled ? challenge?.flags : undefined
+  const flags = useMemo(() => {
+    if (!account?.rules.enabled || !challenge) return undefined
+    if (account.showConsistency) return challenge.flags
+    // Without the consistency rule, days over its cap are not worth flagging.
+    const kept = new Map<string, DayFlag[]>()
+    for (const [day, f] of challenge.flags) {
+      const rest = f.filter((x) => x !== 'over-cap')
+      if (rest.length) kept.set(day, rest)
+    }
+    return kept
+  }, [account, challenge])
   const scopedTrades = useMemo(
     () => (perfScope === 'month' ? viewTrades.filter((t) => t.date.startsWith(monthPrefix)) : viewTrades),
     [viewTrades, perfScope, monthPrefix],

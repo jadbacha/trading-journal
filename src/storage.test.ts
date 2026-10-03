@@ -26,6 +26,18 @@ describe('normalize', () => {
     expect(data.trades.map((t) => t.accountId)).toEqual(['a1', 'a1'])
   })
 
+  it('hides evaluation-only objectives on accounts that had already passed', () => {
+    const data = normalize({
+      accounts: [{ id: 'p', status: 'passed' }, { id: 'e', status: 'evaluation' }, { id: 'x', status: 'funded', showConsistency: true }],
+      trades: [],
+    })
+    expect(data.accounts.map((a) => [a.showProfitTarget, a.showConsistency, a.showTradingDays])).toEqual([
+      [false, false, false],
+      [true, true, true],
+      [false, true, false],
+    ])
+  })
+
   it('rejects files that are not backups', () => {
     expect(() => normalize({ hello: 1 })).toThrow()
   })

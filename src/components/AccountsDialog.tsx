@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Account, AccountStatus } from '../accounts'
-import { daysInclusive, defaultAccount, formatDay, newId, payoutTotal, STATUS_LABEL } from '../accounts'
+import { daysInclusive, defaultAccount, formatDay, newId, payoutTotal, STATUS_LABEL, withStatus } from '../accounts'
 import type { ChallengeRules } from '../challenge'
 import { formatRemaining, parseDuration, toLocalInput } from '../challenge'
 import { parseMoney } from '../csv'
@@ -136,11 +136,7 @@ function AccountEditor({
     </label>
   )
 
-  const setStatus = (status: AccountStatus) => {
-    // Finishing the evaluation stamps today's date unless one is already set.
-    const finished = status === 'passed' || status === 'failed' || status === 'funded'
-    set({ status, evalEnd: finished ? a.evalEnd || today : '' })
-  }
+  const setStatus = (status: AccountStatus) => onChange(withStatus(a, status, today))
 
   const evalDays = rules.startDate ? daysInclusive(rules.startDate, a.evalEnd || today) : null
   const payouts = [...a.payouts].sort((x, y) => y.date.localeCompare(x.date))
@@ -208,6 +204,23 @@ function AccountEditor({
           Objectives
         </label>
       </div>
+      {rules.enabled && (
+        <div className="row-checks sub">
+          <label className="check">
+            <input type="checkbox" checked={a.showProfitTarget} onChange={(e) => set({ showProfitTarget: e.target.checked })} />
+            Profit target
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={a.showConsistency} onChange={(e) => set({ showConsistency: e.target.checked })} />
+            Consistency
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={a.showTradingDays} onChange={(e) => set({ showTradingDays: e.target.checked })} />
+            Trading days
+          </label>
+          <span className="muted">Daily loss and max drawdown always show. Passed and funded accounts hide these three automatically.</span>
+        </div>
+      )}
 
       <div className="mapping deadline">
         <label>

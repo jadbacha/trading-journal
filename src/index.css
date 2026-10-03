@@ -318,7 +318,7 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
 .challenge-balance { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .challenge-balance strong { color: var(--text); }
 .challenge-actions { display: flex; align-items: center; gap: 8px; }
-.meters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
 .meter { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .meter-top { display: flex; flex-direction: column; gap: 2px; }
 .meter-value { font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -512,3 +512,6 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
   .add-payout { grid-template-columns: 1fr 1fr; }
   .add-payout button { grid-column: span 2; }
 }
+
+.row-checks.sub { margin: 4px 0 0 22px; align-items: center; }
+.row-checks.sub .muted { flex-basis: 100%; font-size: 0.78rem; }

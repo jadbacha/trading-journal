@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { daysInclusive, defaultAccount, portfolio } from './accounts'
+import { daysInclusive, defaultAccount, portfolio, withStatus } from './accounts'
 
 describe('portfolio', () => {
   it('totals costs and payouts and computes ROI', () => {
@@ -29,5 +29,35 @@ describe('daysInclusive', () => {
     expect(daysInclusive('2026-09-21', '2026-10-05')).toBe(15)
     expect(daysInclusive('2026-10-05', '2026-09-21')).toBeNull()
     expect(daysInclusive('', '2026-09-21')).toBeNull()
+  })
+})
+
+describe('withStatus', () => {
+  const base = defaultAccount({ rules: { ...defaultAccount().rules, startDate: '2026-09-21' } })
+
+  it('hides evaluation-only objectives when passed or funded and stamps the finish date', () => {
+    for (const status of ['passed', 'funded'] as const) {
+      expect(withStatus(base, status, '2026-10-03')).toMatchObject({
+        status,
+        evalEnd: '2026-10-03',
+        showProfitTarget: false,
+        showConsistency: false,
+        showTradingDays: false,
+      })
+    }
+  })
+
+  it('leaves the objectives alone when failed', () => {
+    const custom = { ...base, showConsistency: false }
+    expect(withStatus(custom, 'failed', '2026-10-03')).toMatchObject({ evalEnd: '2026-10-03', showProfitTarget: true, showConsistency: false })
+  })
+
+  it('brings them back and clears the finish date on returning to evaluation', () => {
+    const passed = withStatus(base, 'passed', '2026-10-03')
+    expect(withStatus(passed, 'evaluation', '2026-10-04')).toMatchObject({ evalEnd: '', showProfitTarget: true, showConsistency: true, showTradingDays: true })
+  })
+
+  it('keeps an existing finish date', () => {
+    expect(withStatus({ ...base, evalEnd: '2026-10-01' }, 'funded', '2026-10-09').evalEnd).toBe('2026-10-01')
   })
 })

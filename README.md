@@ -15,7 +15,8 @@ deadline, and its payouts (date and amount). Pick an account at the top to see i
 For a single account, a **challenge tracker** above the calendar follows its objectives: profit target, consistency
 (best day vs. its cap), today's loss against the daily limit, room left above the (trailing) max drawdown floor, and
 trading days. It can also show the evaluation start date and a countdown to the deadline; choose which in the
-account's settings. **✓ Passed** and **✗ Failed** record when the evaluation ended.
+account's settings, along with which objectives appear. **✓ Passed** and **✗ Failed** record when the evaluation
+ended; passed and funded accounts hide the profit target, consistency and trading days, which no longer apply.
 
 Below the monthly summary, **Performance** shows win rate, average win, average loss (with the win/loss ratio) and
 profit factor for the month on screen or all time. These are per trade and after commissions; breakeven trades

@@ -31,6 +31,10 @@ export interface Account {
   /** What the tracker shows next to the objectives. */
   showStart: boolean
   showRemaining: boolean
+  /** Evaluation-only objectives, usually hidden once the account has passed. */
+  showProfitTarget: boolean
+  showConsistency: boolean
+  showTradingDays: boolean
   payouts: Payout[]
 }
 
@@ -46,9 +50,29 @@ export const defaultAccount = (patch: Partial<Account> = {}): Account => ({
   rules: defaultRules(),
   showStart: true,
   showRemaining: true,
+  showProfitTarget: true,
+  showConsistency: true,
+  showTradingDays: true,
   payouts: [],
   ...patch,
 })
+
+/**
+ * Changes an account's status. Ending the evaluation stamps today as the finish date unless one
+ * is set. Passed and funded accounts no longer have a profit target, consistency rule or minimum
+ * days, so those are hidden; going back to evaluation shows them again. Failing leaves them as
+ * they were, to see what went wrong.
+ */
+export function withStatus(a: Account, status: AccountStatus, today: string): Account {
+  const finished = status !== 'evaluation'
+  const evalOnly = status === 'evaluation' ? true : status === 'failed' ? null : false
+  return {
+    ...a,
+    status,
+    evalEnd: finished ? a.evalEnd || today : '',
+    ...(evalOnly === null ? {} : { showProfitTarget: evalOnly, showConsistency: evalOnly, showTradingDays: evalOnly }),
+  }
+}
 
 const round = (n: number) => Math.round(n * 100) / 100
 

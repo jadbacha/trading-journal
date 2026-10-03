@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Account } from '../accounts'
-import { daysInclusive, formatDay, payoutTotal, STATUS_LABEL } from '../accounts'
+import { daysInclusive, formatDay, payoutTotal, STATUS_LABEL, withStatus } from '../accounts'
 import type { ChallengeStatus } from '../challenge'
 import { formatRemaining, NEAR_LIMIT, parseDuration, toLocalInput } from '../challenge'
 import { formatMoney, isoDay } from '../stats'
@@ -128,7 +128,7 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
   const inEval = account.status === 'evaluation'
   const evalDays = rules.startDate ? daysInclusive(rules.startDate, account.evalEnd || today) : null
   const finish = (status: 'passed' | 'failed') => {
-    if (confirm(`Mark "${account.name}" as ${status} today?`)) onAccount({ ...account, status, evalEnd: account.evalEnd || today })
+    if (confirm(`Mark "${account.name}" as ${status} today?`)) onAccount(withStatus(account, status, today))
   }
   const money = (n: number, signed = false) => formatMoney(n, currency, signed)
 
@@ -204,24 +204,28 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
 
       {rules.enabled && (
       <div className="meters">
-        <Meter
-          label="Profit target"
-          value={money(s.profit, true)}
-          detail={`${money(Math.max(0, rules.profitTarget - s.profit))} to go of ${money(rules.profitTarget)}`}
-          ratio={rules.profitTarget ? s.profit / rules.profitTarget : 0}
-          tone={s.profit >= rules.profitTarget ? 'good' : s.profit < 0 ? 'bad' : 'good'}
-        />
-        <Meter
-          label={`Consistency (${rules.consistencyPct}%)`}
-          value={money(s.bestDay)}
-          detail={
-            consistencyRatio > 1
-              ? `Best day is ${money(s.bestDay - s.consistencyCap)} over the ${money(s.consistencyCap)} cap`
-              : `Best day · cap ${money(s.consistencyCap)}`
-          }
-          ratio={consistencyRatio}
-          tone={consistencyRatio > 1 ? 'bad' : consistencyRatio >= NEAR_LIMIT ? 'warn' : 'good'}
-        />
+        {account.showProfitTarget && (
+          <Meter
+            label="Profit target"
+            value={money(s.profit, true)}
+            detail={`${money(Math.max(0, rules.profitTarget - s.profit))} to go of ${money(rules.profitTarget)}`}
+            ratio={rules.profitTarget ? s.profit / rules.profitTarget : 0}
+            tone={s.profit >= rules.profitTarget ? 'good' : s.profit < 0 ? 'bad' : 'good'}
+          />
+        )}
+        {account.showConsistency && (
+          <Meter
+            label={`Consistency (${rules.consistencyPct}%)`}
+            value={money(s.bestDay)}
+            detail={
+              consistencyRatio > 1
+                ? `Best day is ${money(s.bestDay - s.consistencyCap)} over the ${money(s.consistencyCap)} cap`
+                : `Best day · cap ${money(s.consistencyCap)}`
+            }
+            ratio={consistencyRatio}
+            tone={consistencyRatio > 1 ? 'bad' : consistencyRatio >= NEAR_LIMIT ? 'warn' : 'good'}
+          />
+        )}
         <Meter
           label="Daily loss today"
           value={money(-todayLoss)}
@@ -240,13 +244,15 @@ export function ChallengeCard({ account, status: s, currency, onEdit, onAccount 
           ratio={drawdownUsed}
           tone={s.drawdownBreached || drawdownUsed >= 1 ? 'bad' : drawdownUsed >= NEAR_LIMIT ? 'warn' : 'neutral'}
         />
-        <Meter
-          label="Trading days"
-          value={`${s.tradingDays} / ${rules.minTradingDays}`}
-          detail={s.tradingDays >= rules.minTradingDays ? 'Minimum reached' : `${rules.minTradingDays - s.tradingDays} more needed`}
-          ratio={rules.minTradingDays ? s.tradingDays / rules.minTradingDays : 1}
-          tone="good"
-        />
+        {account.showTradingDays && (
+          <Meter
+            label="Trading days"
+            value={`${s.tradingDays} / ${rules.minTradingDays}`}
+            detail={s.tradingDays >= rules.minTradingDays ? 'Minimum reached' : `${rules.minTradingDays - s.tradingDays} more needed`}
+            ratio={rules.minTradingDays ? s.tradingDays / rules.minTradingDays : 1}
+            tone="good"
+          />
+        )}
       </div>
       )}
     </section>

@@ -51,7 +51,9 @@ export function normalize(value: unknown): JournalData {
   const accounts: Account[] =
     Array.isArray(v.accounts) && v.accounts.length
       ? v.accounts.map((a) => {
-          const fresh = defaultAccount()
+          // Accounts saved before the objective toggles existed: hide them if the eval is already over.
+          const evalOnly = a.status !== 'passed' && a.status !== 'funded'
+          const fresh = defaultAccount({ showProfitTarget: evalOnly, showConsistency: evalOnly, showTradingDays: evalOnly })
           return { ...fresh, ...a, rules: { ...fresh.rules, ...a.rules }, payouts: Array.isArray(a.payouts) ? a.payouts : [] }
         })
       : [defaultAccount({ rules: { ...defaultRules(), ...legacyRules } })]
