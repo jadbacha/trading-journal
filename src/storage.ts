@@ -11,7 +11,7 @@ export const emptyData = (): JournalData => ({
   trades: [],
   notes: {},
   settings: {
-    breakevenThreshold: 0,
+    breakeven: { low: 0, high: 0 },
     currency: 'USD',
     commissionPerContract: 1.3,
     mistakeTags: DEFAULT_MISTAKES,
@@ -44,10 +44,15 @@ export function saveData(data: JournalData): void {
 export function normalize(value: unknown): JournalData {
   const base = emptyData()
   if (!value || typeof value !== 'object') throw new Error('Not a journal backup')
-  const v = value as Partial<JournalData> & { settings?: { challenge?: Partial<Account['rules']> } }
+  const v = value as Partial<Omit<JournalData, 'settings'>> & { settings?: unknown }
   if (!Array.isArray(v.trades)) throw new Error('Backup has no trades list')
 
-  const { challenge: legacyRules, ...settings } = v.settings ?? {}
+  const { challenge: legacyRules, breakevenThreshold, ...settings } = (v.settings ?? {}) as Partial<JournalData['settings']> & {
+    challenge?: Partial<Account['rules']>
+    breakevenThreshold?: number
+  }
+  // Older journals had a symmetric ±threshold.
+  if (!settings.breakeven && typeof breakevenThreshold === 'number') settings.breakeven = { low: -breakevenThreshold, high: breakevenThreshold }
   const accounts: Account[] =
     Array.isArray(v.accounts) && v.accounts.length
       ? v.accounts.map((a) => {

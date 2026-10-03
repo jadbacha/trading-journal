@@ -34,7 +34,7 @@ export interface DayNote {
 
 export interface Settings {
   /** A day whose |net P&L| is at or below this amount counts as breakeven (gray). */
-  breakevenThreshold: number
+  breakeven: BreakevenRange
   currency: string
   /** Round-trip commission per contract, subtracted from gross trades. */
   commissionPerContract: number
@@ -47,6 +47,12 @@ export interface JournalData {
   trades: Trade[]
   notes: Record<string, DayNote>
   settings: Settings
+}
+
+/** P&L from `low` to `high` (inclusive) counts as breakeven, e.g. −20 to +15. */
+export interface BreakevenRange {
+  low: number
+  high: number
 }
 
 export type DayResult = 'profit' | 'loss' | 'breakeven'

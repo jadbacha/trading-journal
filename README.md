@@ -4,7 +4,8 @@ A simple journal for a The Trading Pit futures account. Each day on the calendar
 
 - **green** when the day's net P&L is positive
 - **red** when it's negative
-- **gray** when it's breakeven (exactly 0, or within a ± range you set in Settings)
+- **gray** when it's breakeven: inside a range you set, e.g. −$20 to +$15 (edit it from the Green / Red / BE card
+  or Settings). Trades inside the range count as breakeven too, so scratches don't skew the win rate
 
 **Accounts:** track as many prop-firm accounts as you like (**Accounts** button). Each one has its price, purchase
 date, status (Evaluation, Passed, Funded, Failed), evaluation start and finish dates, its own challenge rules and
@@ -18,9 +19,9 @@ trading days. It can also show the evaluation start date and a countdown to the 
 account's settings, along with which objectives appear. **✓ Passed** and **✗ Failed** record when the evaluation
 ended; passed and funded accounts hide the profit target, consistency and trading days, which no longer apply.
 
-Below the monthly summary, **Performance** shows total profit (all time), win rate, average win, average loss (with the win/loss ratio) and
-profit factor for the month on screen or all time. These are per trade and after commissions; breakeven trades
-don't count toward the win rate.
+The summary (P&L or total profit, green/red/breakeven days, green-day rate, best and worst day) and **Performance**
+follow the **This month / All time** switch. Performance shows win rate, average win, average loss (with the win/loss ratio) and
+profit factor. These are per trade and after commissions; breakeven trades don't count toward the win rate.
 
 Click a day to open its journal:
 

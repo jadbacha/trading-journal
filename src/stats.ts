@@ -1,4 +1,4 @@
-import type { DayResult, Settings, Trade } from './types'
+import type { BreakevenRange, DayResult, Settings, Trade } from './types'
 
 export interface DaySummary {
   date: string
@@ -17,14 +17,18 @@ export function tradeFees(t: Trade, commissionPerContract: number): number {
 export const netPnl = (t: Trade, commissionPerContract: number) =>
   Math.round((t.pnl - tradeFees(t, commissionPerContract)) * 100) / 100
 
-export function classify(pnl: number, breakevenThreshold: number): DayResult {
-  if (Math.abs(pnl) <= breakevenThreshold) return 'breakeven'
-  return pnl > 0 ? 'profit' : 'loss'
+const ZERO: BreakevenRange = { low: 0, high: 0 }
+
+/** Above the breakeven range is a profit, below it a loss, inside it breakeven. */
+export function classify(pnl: number, { low, high }: BreakevenRange = ZERO): DayResult {
+  if (pnl > high) return 'profit'
+  if (pnl < low) return 'loss'
+  return 'breakeven'
 }
 
 export function summarizeDays(
   trades: Trade[],
-  { breakevenThreshold, commissionPerContract }: Pick<Settings, 'breakevenThreshold' | 'commissionPerContract'>,
+  { breakeven, commissionPerContract }: Pick<Settings, 'breakeven' | 'commissionPerContract'>,
 ): Map<string, DaySummary> {
   const days = new Map<string, DaySummary>()
   for (const t of trades) {
@@ -37,7 +41,7 @@ export function summarizeDays(
   for (const d of days.values()) {
     d.pnl = Math.round(d.pnl * 100) / 100
     d.fees = Math.round(d.fees * 100) / 100
-    d.result = classify(d.pnl, breakevenThreshold)
+    d.result = classify(d.pnl, breakeven)
   }
   return days
 }
@@ -84,8 +88,8 @@ export interface TradeStats {
   totalPnl: number
 }
 
-/** Trade-level performance, using P&L after commissions. */
-export function tradeStats(trades: Trade[], commissionPerContract: number): TradeStats {
+/** Trade-level performance, using P&L after commissions. Trades inside the breakeven range are neither wins nor losses. */
+export function tradeStats(trades: Trade[], commissionPerContract: number, breakeven: BreakevenRange = ZERO): TradeStats {
   let won = 0
   let total = 0
   let lost = 0
@@ -94,10 +98,11 @@ export function tradeStats(trades: Trade[], commissionPerContract: number): Trad
   for (const t of trades) {
     const pnl = netPnl(t, commissionPerContract)
     total += pnl
-    if (pnl > 0) {
+    const result = classify(pnl, breakeven)
+    if (result === 'profit') {
       wins++
       won += pnl
-    } else if (pnl < 0) {
+    } else if (result === 'loss') {
       losses++
       lost -= pnl
     }
@@ -131,3 +136,7 @@ export function formatMoney(n: number, currency: string, signed = false): string
   if (n < 0) return `−${text}`
   return signed && n > 0 ? `+${text}` : text
 }
+
+/** "−$20.00 to +$15.00", or "exactly $0" when there is no range. */
+export const describeRange = ({ low, high }: BreakevenRange, currency: string) =>
+  low === 0 && high === 0 ? 'exactly $0' : `${formatMoney(low, currency)} to ${formatMoney(high, currency, true)}`

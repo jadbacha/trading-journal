@@ -523,3 +523,28 @@ main.with-panel { grid-template-columns: minmax(0, 1fr) 360px; }
   .countdown { width: auto; flex-basis: 100%; }
   .challenge { padding: 12px; }
 }
+
+/* Breakeven range */
+.be-stat { position: relative; }
+.be-stat .stat-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.be-edit { font-size: 0.72rem; text-transform: none; letter-spacing: 0; }
+.be-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(300px, calc(100vw - 32px));
+  z-index: 5;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.be-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.be-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+.be-fields .muted { grid-column: span 2; margin: 2px 0 0; font-size: 0.78rem; text-transform: none; letter-spacing: 0; }
+@media (max-width: 960px) {
+  .be-popover { position: static; width: auto; box-shadow: none; margin-top: 8px; padding: 10px; }
+  .be-fields { grid-template-columns: 1fr; }
+  .be-fields .muted { grid-column: auto; }
+}

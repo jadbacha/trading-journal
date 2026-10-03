@@ -80,11 +80,16 @@ describe('importing platform exports', () => {
 })
 
 describe('day colouring', () => {
-  it('classifies by net P&L with a breakeven band', () => {
-    expect(classify(50, 0)).toBe('profit')
-    expect(classify(-0.01, 0)).toBe('loss')
-    expect(classify(0, 0)).toBe('breakeven')
-    expect(classify(-8, 10)).toBe('breakeven')
+  it('classifies by net P&L with a breakeven range', () => {
+    expect(classify(50)).toBe('profit')
+    expect(classify(-0.01)).toBe('loss')
+    expect(classify(0)).toBe('breakeven')
+    const range = { low: -20, high: 15 }
+    expect(classify(-8, range)).toBe('breakeven')
+    expect(classify(-20, range)).toBe('breakeven')
+    expect(classify(15, range)).toBe('breakeven')
+    expect(classify(15.01, range)).toBe('profit')
+    expect(classify(-20.01, range)).toBe('loss')
   })
 
   it('nets all trades on a day before colouring', () => {
@@ -94,7 +99,7 @@ describe('day colouring', () => {
         { id: 'b', accountId: 'acc', date: '2026-10-01', pnl: -100, source: 'manual' },
         { id: 'c', accountId: 'acc', date: '2026-10-02', pnl: -30, source: 'manual' },
       ],
-      { breakevenThreshold: 0, commissionPerContract: 0 },
+      { breakeven: { low: 0, high: 0 }, commissionPerContract: 0 },
     )
     expect(days.get('2026-10-01')).toMatchObject({ pnl: 0, trades: 2, result: 'breakeven' })
     expect(days.get('2026-10-02')?.result).toBe('loss')
@@ -106,7 +111,7 @@ describe('day colouring', () => {
       { id: 'b', accountId: 'acc', date: '2026-10-01', pnl: -20, source: 'manual' as const },
       { id: 'c', accountId: 'acc', date: '2026-10-02', pnl: 4, qty: 2, gross: true, source: 'import' as const },
     ]
-    const days = summarizeDays(trades, { breakevenThreshold: 0, commissionPerContract: 2.5 })
+    const days = summarizeDays(trades, { breakeven: { low: 0, high: 0 }, commissionPerContract: 2.5 })
     expect(days.get('2026-10-01')).toMatchObject({ pnl: 446.5, fees: 7.5, result: 'profit' })
     // A small gross win that commissions turn into a loss shows red.
     expect(days.get('2026-10-02')).toMatchObject({ pnl: -1, fees: 5, result: 'loss' })
@@ -132,6 +137,12 @@ describe('tradeStats', () => {
     expect(s.winRate).toBeCloseTo(0.4)
     expect(s.profitFactor).toBeCloseTo(400 / 150.1)
     expect(s.winLossRatio).toBeCloseTo(200 / 50.03)
+  })
+
+  it('counts trades inside the breakeven range as breakeven, not wins or losses', () => {
+    const s = tradeStats([t(300), t(4), t(-6), t(-100)], 0, { low: -10, high: 10 })
+    expect(s).toMatchObject({ wins: 1, losses: 1, breakeven: 2, avgWin: 300, avgLoss: 100, totalPnl: 198 })
+    expect(s.winRate).toBe(0.5)
   })
 
   it('handles one-sided and empty histories', () => {

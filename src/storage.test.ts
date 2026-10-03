@@ -38,6 +38,13 @@ describe('normalize', () => {
     ])
   })
 
+  it('turns the old ±threshold into a breakeven range', () => {
+    expect(normalize({ trades: [], settings: { breakevenThreshold: 10 } }).settings.breakeven).toEqual({ low: -10, high: 10 })
+    expect(normalize({ trades: [], settings: { breakeven: { low: -20, high: 5 } } }).settings.breakeven).toEqual({ low: -20, high: 5 })
+    expect(normalize({ trades: [] }).settings.breakeven).toEqual({ low: 0, high: 0 })
+    expect(normalize({ trades: [], settings: { breakevenThreshold: 10 } }).settings).not.toHaveProperty('breakevenThreshold')
+  })
+
   it('rejects files that are not backups', () => {
     expect(() => normalize({ hello: 1 })).toThrow()
   })

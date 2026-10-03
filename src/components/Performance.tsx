@@ -8,36 +8,19 @@ interface Props {
   scope: 'month' | 'all'
   monthName: string
   currency: string
-  onScope: (scope: 'month' | 'all') => void
 }
 
 const pf = (n: number | null) => (n === null ? '—' : n === Infinity ? '∞' : n.toFixed(2))
 
-export function Performance({ stats: s, mistakes, scope, monthName, currency, onScope }: Props) {
+export function Performance({ stats: s, mistakes, scope, monthName, currency }: Props) {
   const winTone = s.winRate === null ? '' : s.winRate >= 0.5 ? 'pos' : 'neg'
   const pfTone = s.profitFactor === null ? '' : s.profitFactor >= 1 ? 'pos' : 'neg'
   return (
     <section className="perf" aria-label="Trade performance">
       <div className="perf-head">
         <h3>Performance · {scope === 'month' ? monthName : 'All time'}</h3>
-        <div className="segmented" role="tablist">
-          {(['month', 'all'] as const).map((v) => (
-            <button key={v} role="tab" aria-selected={scope === v} className={scope === v ? 'on' : ''} onClick={() => onScope(v)}>
-              {v === 'month' ? 'This month' : 'All time'}
-            </button>
-          ))}
-        </div>
       </div>
       <div className="stats perf-stats">
-        {scope === 'all' && (
-          <div className="stat">
-            <span className="stat-label">Total profit</span>
-            <span className={`stat-value ${s.totalPnl > 0 ? 'pos' : s.totalPnl < 0 ? 'neg' : ''}`}>
-              {formatMoney(s.totalPnl, currency, true)}
-            </span>
-            <span className="meter-detail">All trades, after commissions</span>
-          </div>
-        )}
         <div className="stat">
           <span className="stat-label">Win rate</span>
           <span className={`stat-value ${winTone}`}>{s.winRate === null ? '—' : `${Math.round(s.winRate * 100)}%`}</span>

@@ -3,6 +3,7 @@ import type { JournalData, Settings } from '../types'
 import { blobToDataUrl, clearImages, dataUrlToBlob, getImage, putImage } from '../images'
 import { DEFAULT_MISTAKES } from '../mistakes'
 import { normalize } from '../storage'
+import { BreakevenFields } from './BreakevenFields'
 
 interface Props {
   data: JournalData
@@ -70,16 +71,6 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
 
         <div className="mapping">
           <label>
-            <span>Breakeven range (±)</span>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              value={settings.breakevenThreshold}
-              onChange={(e) => onSettings({ ...settings, breakevenThreshold: Math.max(0, Number(e.target.value) || 0) })}
-            />
-          </label>
-          <label>
             <span>Currency</span>
             <select value={settings.currency} onChange={(e) => onSettings({ ...settings, currency: e.target.value })}>
               {['USD', 'EUR', 'GBP', 'CHF', 'AUD', 'CAD'].map((c) => (
@@ -104,10 +95,9 @@ export function SettingsDialog({ data, onSettings, onReplace, onClose }: Props) 
           The commission is subtracted from trades whose P&L came in before fees (like Tradovate's Performance
           export), on every day, including ones already imported.
         </p>
-        <p className="muted">
-          Days with a net P&L within ±{settings.breakevenThreshold} show gray. Set it to e.g. 10 if you want tiny
-          scratch days counted as breakeven.
-        </p>
+
+        <h3>Breakeven range</h3>
+        <BreakevenFields range={settings.breakeven} currency={settings.currency} onChange={(breakeven) => onSettings({ ...settings, breakeven })} />
 
         <h3>Mistake tags</h3>
         <label className="stack">

@@ -5,13 +5,14 @@ import { AccountsDialog } from './components/AccountsDialog'
 import { PortfolioCard } from './components/PortfolioCard'
 import { Calendar } from './components/Calendar'
 import { ChallengeCard } from './components/ChallengeCard'
+import { BreakevenFields } from './components/BreakevenFields'
 import { DayPanel } from './components/DayPanel'
 import { Performance } from './components/Performance'
 import { ImportDialog } from './components/ImportDialog'
 import { SettingsDialog } from './components/SettingsDialog'
 import { mistakeReport } from './mistakes'
 import { loadData, saveData } from './storage'
-import { formatMoney, isoDay, netPnl, periodStats, summarizeDays, tradeStats } from './stats'
+import { describeRange, formatMoney, isoDay, netPnl, periodStats, summarizeDays, tradeStats } from './stats'
 import type { DayNote, JournalData } from './types'
 
 const VIEW_KEY = 'trading-journal:view'
@@ -36,6 +37,7 @@ export default function App() {
   const [dialog, setDialog] = useState<'import' | 'settings' | 'accounts' | null>(null)
   const [openAccount, setOpenAccount] = useState<string | null>(null)
   const [perfScope, setPerfScope] = useState<'month' | 'all'>('month')
+  const [editingBe, setEditingBe] = useState(false)
   const [savedView, setView] = useState(loadView)
 
   useEffect(() => saveData(data), [data])
@@ -65,9 +67,10 @@ export default function App() {
     return m
   }, [data.trades])
   const monthPrefix = `${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}`
-  const month = useMemo(
-    () => periodStats([...days.values()].filter((d) => d.date.startsWith(monthPrefix))),
-    [days, monthPrefix],
+  // The summary row and Performance both follow the This month / All time switch.
+  const period = useMemo(
+    () => periodStats([...days.values()].filter((d) => perfScope === 'all' || d.date.startsWith(monthPrefix))),
+    [days, monthPrefix, perfScope],
   )
   const today = isoDay(now)
   const challenge = useMemo(() => (account ? challengeStatus(days.values(), account.rules, today) : null), [days, account, today])
@@ -86,12 +89,15 @@ export default function App() {
     () => (perfScope === 'month' ? viewTrades.filter((t) => t.date.startsWith(monthPrefix)) : viewTrades),
     [viewTrades, perfScope, monthPrefix],
   )
-  const perf = useMemo(() => tradeStats(scopedTrades, settings.commissionPerContract), [scopedTrades, settings.commissionPerContract])
+  const perf = useMemo(
+    () => tradeStats(scopedTrades, settings.commissionPerContract, settings.breakeven),
+    [scopedTrades, settings.commissionPerContract, settings.breakeven],
+  )
   const mistakes = useMemo(
     () => mistakeReport(scopedTrades, settings.commissionPerContract),
     [scopedTrades, settings.commissionPerContract],
   )
-  const tradingDays = month.green + month.red + month.gray
+  const tradingDays = period.green + period.red + period.gray
   const existingIds = useMemo(() => new Set(data.trades.map((t) => t.id)), [data.trades])
 
   const updateAccount = (next: (typeof accounts)[number]) =>
@@ -167,30 +173,61 @@ export default function App() {
             </button>
           </div>
 
+          <div className="perf-head">
+            <h3>Summary · {perfScope === 'month' ? monthName : 'All time'}</h3>
+            <div className="segmented" role="tablist" aria-label="Period">
+              {(['month', 'all'] as const).map((v) => (
+                <button key={v} role="tab" aria-selected={perfScope === v} className={perfScope === v ? 'on' : ''} onClick={() => setPerfScope(v)}>
+                  {v === 'month' ? 'This month' : 'All time'}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="stats">
             <div className="stat">
-              <span className="stat-label">Month P&L</span>
-              <span className={`stat-value ${month.pnl > 0 ? 'pos' : month.pnl < 0 ? 'neg' : ''}`}>
-                {formatMoney(month.pnl, settings.currency, true)}
+              <span className="stat-label">{perfScope === 'month' ? 'Month P&L' : 'Total profit'}</span>
+              <span className={`stat-value ${period.pnl > 0 ? 'pos' : period.pnl < 0 ? 'neg' : ''}`}>
+                {formatMoney(period.pnl, settings.currency, true)}
               </span>
+              {perfScope === 'all' && <span className="meter-detail">All trades, after commissions</span>}
             </div>
-            <div className="stat">
-              <span className="stat-label">Green / Red / BE</span>
-              <span className="stat-value">
-                <span className="pos">{month.green}</span> / <span className="neg">{month.red}</span> /{' '}
-                <span className="be">{month.gray}</span>
+            <div className="stat be-stat">
+              <span className="stat-label">
+                Green / Red / BE
+                <button className="link be-edit" onClick={() => setEditingBe(!editingBe)} aria-expanded={editingBe}>
+                  {editingBe ? 'Done' : 'BE range'}
+                </button>
               </span>
+              <span className="stat-value">
+                <span className="pos">{period.green}</span> / <span className="neg">{period.red}</span> /{' '}
+                <span className="be">{period.gray}</span>
+              </span>
+              <span className="meter-detail">BE: {describeRange(settings.breakeven, settings.currency)}</span>
+              {editingBe && (
+                <div className="be-popover">
+                  <BreakevenFields
+                    range={settings.breakeven}
+                    currency={settings.currency}
+                    onChange={(breakeven) => setData((d) => ({ ...d, settings: { ...d.settings, breakeven } }))}
+                  />
+                </div>
+              )}
             </div>
             <div className="stat">
               <span className="stat-label">Green-day rate</span>
-              <span className="stat-value">{tradingDays ? `${Math.round((month.green / tradingDays) * 100)}%` : '—'}</span>
+              <span className="stat-value">{tradingDays ? `${Math.round((period.green / tradingDays) * 100)}%` : '—'}</span>
+              {tradingDays > 0 && (
+                <span className="meter-detail">
+                  {tradingDays} trading day{tradingDays === 1 ? '' : 's'}
+                </span>
+              )}
             </div>
             <div className="stat">
               <span className="stat-label">Best / worst day</span>
               <span className="stat-value small">
-                <span className="pos">{formatMoney(month.bestDay, settings.currency, true)}</span>
+                <span className="pos">{formatMoney(period.bestDay, settings.currency, true)}</span>
                 {' / '}
-                <span className="neg">{formatMoney(month.worstDay, settings.currency, true)}</span>
+                <span className="neg">{formatMoney(period.worstDay, settings.currency, true)}</span>
               </span>
             </div>
           </div>
@@ -201,7 +238,6 @@ export default function App() {
             scope={perfScope}
             monthName={monthName}
             currency={settings.currency}
-            onScope={setPerfScope}
           />
 
           <Calendar
